@@ -96,7 +96,7 @@
   .status-badge { font-size:11px; font-weight:600; padding:3px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px; }
   .status-badge.available { background:rgba(34,197,94,0.15); color:var(--green); }
   .status-badge.checked-out { background:rgba(249,115,22,0.15); color:var(--orange); }
-  .status-badge.reserved { background:rgba(168,85,247,0.15); color:var(--purple); }
+  .status-badge.requested { background:rgba(168,85,247,0.15); color:var(--purple); }
   .genre-badge { font-size:11px; color:var(--muted); padding:3px 8px; border-radius:6px; background:var(--surface); }
   .pages-badge { font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
   .stars { color:var(--gold); font-size:13px; letter-spacing:1px; }
@@ -109,7 +109,7 @@
   .log-table tr:hover td { background:var(--card-hover); }
   .log-status { font-size:12px; font-weight:600; padding:4px 10px; border-radius:8px; display:inline-block; }
   .log-status.reading { background:rgba(99,102,241,0.15); color:var(--accent); }
-  .log-status.reserved { background:rgba(168,85,247,0.15); color:var(--purple); }
+  .log-status.requested { background:rgba(168,85,247,0.15); color:var(--purple); }
   .log-status.returned { background:rgba(34,197,94,0.15); color:var(--green); }
   .log-status.overdue { background:rgba(239,68,68,0.15); color:var(--red); }
   .progress-bar { height:6px; background:var(--surface); border-radius:3px; overflow:hidden; }
@@ -471,7 +471,7 @@ async function loadData() {
 
 // ─── HELPERS ───
 function getBookStatus(title) {
-  const active = logs.filter(l => l.book === title && (l.status === 'reading' || l.status === 'reserved'));
+  const active = logs.filter(l => l.book === title && (l.status === 'reading' || l.status === 'requested'));
   if (active.length > 0) return active[0].status;
   return 'available';
 }
@@ -526,7 +526,7 @@ function render() {
 }
 
 function renderStats() {
-  const activeCheckouts = logs.filter(l => l.status === 'reading' || l.status === 'reserved');
+  const activeCheckouts = logs.filter(l => l.status === 'reading' || l.status === 'requested');
 
   document.getElementById('statBooks').textContent = books.length;
   document.getElementById('statPdfs').textContent = pdfs.length;
@@ -558,8 +558,8 @@ function renderBooks() {
   grid.innerHTML = books.map((b, i) => {
     const status = getBookStatus(b.title);
     const catClass = b.category ? 'cat-' + b.category.toLowerCase() : '';
-    const statusClass = status === 'available' ? 'available' : status === 'reserved' ? 'reserved' : 'checked-out';
-    const statusLabel = status === 'available' ? '✅ Available' : status === 'reserved' ? '🔖 Reserved' : '📤 Checked Out';
+    const statusClass = status === 'available' ? 'available' : status === 'requested' ? 'requested' : 'checked-out';
+    const statusLabel = status === 'available' ? '✅ Available' : status === 'requested' ? '🔖 Requested' : '📤 Checked Out';
     const checkouts = getBookCheckouts(b.title);
     const activeReader = checkouts.find(l => l.status === 'reading');
 
@@ -627,7 +627,7 @@ function renderLogs() {
 
   // Sort: active first, then by date
   const sorted = [...logs].sort((a,b) => {
-    const statusOrder = { reading:0, reserved:1, returned:2 };
+    const statusOrder = { reading:0, requested:1, returned:2 };
     const sa = statusOrder[a.status] ?? 1;
     const sb = statusOrder[b.status] ?? 1;
     if (sa !== sb) return sa - sb;
@@ -638,14 +638,14 @@ function renderLogs() {
     const pct = l.totalPages ? Math.round((l.currentPage / l.totalPages) * 100) : 0;
     const overdue = isOverdue(l);
     const statusClass = overdue ? 'overdue' : l.status;
-    const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'reserved' ? '🔖 Reserved' : '✅ Returned';
+    const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'requested' ? '🔖 Requested' : '✅ Returned';
     return `
       <tr>
         <td><strong>${l.name}</strong></td>
         <td>${l.book}</td>
         <td>${formatDate(l.startDate)}</td>
         <td style="min-width:120px;">
-          ${l.status !== 'reserved' ? `
+          ${l.status !== 'requested' ? `
             <div class="progress-bar" style="width:100px;display:inline-block;vertical-align:middle;">
               <div class="progress-fill ${pct>=100?'completed':'reading'}" style="width:${Math.min(pct,100)}%"></div>
             </div>
@@ -711,8 +711,8 @@ function openModal(idx, type) {
   const status = type === 'pdf' ? null : getBookStatus(item.title);
   let metaHTML = '';
   if (type !== 'pdf' && status) {
-    const sc = status === 'available' ? 'available' : status === 'reserved' ? 'reserved' : 'checked-out';
-    const sl = status === 'available' ? '✅ Available' : status === 'reserved' ? '🔖 Reserved' : '📤 Checked Out';
+    const sc = status === 'available' ? 'available' : status === 'requested' ? 'requested' : 'checked-out';
+    const sl = status === 'available' ? '✅ Available' : status === 'requested' ? '🔖 Requested' : '📤 Checked Out';
     metaHTML += `<span class="status-badge ${sc}">${sl}</span>`;
   }
   if (item.owner) metaHTML += `<span class="owner-badge">👤 ${item.owner}</span>`;
@@ -736,7 +736,7 @@ function openModal(idx, type) {
     list.innerHTML = checkouts.map(l => {
       const pct = l.totalPages ? Math.round((l.currentPage / l.totalPages) * 100) : 0;
       const overdue = isOverdue(l);
-      const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'reserved' ? '🔖 Reserved' : '✅ Returned';
+      const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'requested' ? '🔖 Requested' : '✅ Returned';
       return `
         <div class="checkout-row">
           <div class="checkout-avatar">${l.name[0]}</div>
@@ -744,7 +744,7 @@ function openModal(idx, type) {
             <div class="checkout-name">${l.name}</div>
             <div class="checkout-detail">${statusText} · Started ${formatDate(l.startDate)}${l.dueBack ? ' · Due '+formatDate(l.dueBack) : ''}</div>
           </div>
-          ${l.status !== 'reserved' ? `
+          ${l.status !== 'requested' ? `
           <div class="checkout-progress">
             <div class="progress-bar"><div class="progress-fill ${pct>=100?'completed':'reading'}" style="width:${Math.min(pct,100)}%"></div></div>
             <div class="progress-pct">${Math.min(pct,100)}%</div>
@@ -780,7 +780,7 @@ function renderForms() {
 
   // Return form
   const returnName = document.getElementById('returnName');
-  const activeMembers = [...new Set(logs.filter(l => l.status === 'reading' || l.status === 'reserved').map(l => l.name))].sort();
+  const activeMembers = [...new Set(logs.filter(l => l.status === 'reading' || l.status === 'requested').map(l => l.name))].sort();
   returnName.innerHTML = '<option value="">Select your name…</option>' +
     activeMembers.map(m => `<option value="${m}">${m}</option>`).join('');
 }
@@ -823,7 +823,7 @@ document.getElementById('returnName').onchange = updateReturnBooks;
 
 function updateReturnBooks() {
   const name = document.getElementById('returnName').value;
-  const myBooks = logs.filter(l => l.name === name && (l.status === 'reading' || l.status === 'reserved'));
+  const myBooks = logs.filter(l => l.name === name && (l.status === 'reading' || l.status === 'requested'));
   const returnBook = document.getElementById('returnBook');
   returnBook.innerHTML = '<option value="">Select a checked-out book…</option>' +
     myBooks.map(l => `<option value="${l.book}">${l.book}</option>`).join('');
@@ -921,7 +921,7 @@ async function doReturn() {
   const isComplete = currentPage >= totalPages && totalPages > 0;
   const status = isComplete ? 'returned' : 'reading';
 
-  const idx = logs.findIndex(l => l.name === name && l.book === bookTitle && (l.status === 'reading' || l.status === 'reserved'));
+  const idx = logs.findIndex(l => l.name === name && l.book === bookTitle && (l.status === 'reading' || l.status === 'requested'));
   if (idx >= 0) {
     logs[idx].currentPage = currentPage;
     logs[idx].status = status;
