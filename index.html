@@ -75,6 +75,8 @@
   .cat-btn.active[data-cat="thinking"] { background:#60a5fa; border-color:#60a5fa; }
   .cat-btn.active[data-cat="fiction"] { background:#f97316; border-color:#f97316; }
   .cat-btn.active[data-cat="reference"] { background:#14b8a6; border-color:#14b8a6; }
+  .cat-btn.active[data-filter="cat:digital pdf"] { background:#0d9488; border-color:#0d9488; }
+  .cat-btn.active[data-filter="cat:kids 10yrs"] { background:#d97706; border-color:#d97706; }
 
   /* Book Grid */
   .book-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; }
@@ -87,6 +89,7 @@
   .book-card.cat-fiction { border-left:3px solid #f97316; }
   .book-card.cat-reference { border-left:3px solid #14b8a6; }
   .book-card.cat-kids_10yrs { border-left:3px solid #f59e0b; }
+  .book-card.cat-digital_pdf { border-left:3px solid var(--teal); }
 
   .fav-badge { position:absolute; top:8px; right:8px; background:linear-gradient(135deg,#f59e0b,#f97316); color:white; font-size:9px; font-weight:700; padding:3px 6px; border-radius:6px; display:flex; align-items:center; gap:2px; z-index:1; box-shadow:0 2px 6px rgba(245,158,11,0.3); }
   .book-card-inner { display:flex; gap:12px; }
@@ -197,14 +200,6 @@
   .modal-inline-form select { cursor:pointer; -webkit-appearance:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238892a8' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
   .modal-inline-submit { margin-top:12px; width:100%; }
 
-  /* PDF grid */
-  .pdf-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; }
-  .pdf-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; cursor:pointer; transition:all 0.2s; border-left:3px solid var(--teal); -webkit-tap-highlight-color:transparent; }
-  .pdf-card:hover { background:var(--card-hover); border-color:var(--accent); box-shadow:0 6px 20px rgba(0,0,0,0.06); }
-  .pdf-card:active { transform:scale(0.98); }
-  .pdf-card .book-card-inner { display:flex; gap:12px; }
-  .pdf-icon { width:60px; height:88px; border-radius:6px; background:linear-gradient(135deg,var(--teal),var(--blue)); display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; }
-
   /* Empty state */
   .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
   .empty-state .empty-icon { font-size:48px; margin-bottom:16px; }
@@ -230,7 +225,7 @@
     .tabs { padding:0 12px; margin-bottom:12px; }
     .tab { padding:8px 12px; font-size:12px; }
     .content { padding:0 12px 32px; }
-    .book-grid, .pdf-grid { grid-template-columns:1fr; gap:8px; }
+    .book-grid { grid-template-columns:1fr; gap:8px; }
     .book-card, .pdf-card { padding:10px; border-radius:10px; }
     .book-cover, .pdf-icon { width:52px; height:76px; border-radius:5px; }
     .book-cover .placeholder-cover { font-size:20px; }
@@ -256,7 +251,7 @@
 
   /* Two columns on wider phones / small tablets */
   @media(min-width:440px) and (max-width:640px) {
-    .book-grid, .pdf-grid { grid-template-columns:repeat(2,1fr); }
+    .book-grid { grid-template-columns:repeat(2,1fr); }
     .book-cover, .pdf-icon { width:48px; height:70px; }
     .book-card-inner, .pdf-card .book-card-inner { gap:8px; }
     .book-title { font-size:12px; -webkit-line-clamp:2; }
@@ -270,7 +265,6 @@
   /* Touch device optimizations */
   @media(hover:none) {
     .book-card:hover { transform:none; box-shadow:none; background:var(--card); border-color:var(--border); }
-    .pdf-card:hover { transform:none; box-shadow:none; }
   }
 </style>
 </head>
@@ -283,14 +277,13 @@
   <p class="subtitle">A shared library for our community. Browse books, check them out, and share the knowledge. Add books to the Google Sheet and they'll appear here automatically.</p>
   <div class="stats-row" id="statsRow">
     <div class="stat-pill"><span class="stat-icon">📚</span><div><div class="stat-val blue" id="statBooks">—</div><div class="stat-label">Books</div></div></div>
-    <div class="stat-pill"><span class="stat-icon">📄</span><div><div class="stat-val teal" id="statPdfs">—</div><div class="stat-label">PDFs</div></div></div>
+
     <div class="stat-pill"><span class="stat-icon">📤</span><div><div class="stat-val orange" id="statCheckedOut">—</div><div class="stat-label">Checked Out</div></div></div>
   </div>
 </div>
 
 <div class="tabs">
   <div class="tab active" data-tab="books">📚 Books</div>
-  <div class="tab" data-tab="pdfs">📄 PDFs</div>
   <div class="tab" data-tab="logs">📋 Check Out Log</div>
 
 </div>
@@ -312,20 +305,7 @@
     </div>
   </div>
 
-  <!-- PDFs Tab -->
-  <div class="tab-panel" id="panel-pdfs">
-    <div class="search-bar">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="pdfSearch" placeholder="Search PDFs…" oninput="filterPdfs()">
-    </div>
-    <div class="loading" id="pdfsLoading"><div class="spinner"></div>Loading PDFs…</div>
-    <div class="pdf-grid" id="pdfGrid"></div>
-    <div class="empty-state" id="pdfsEmpty" style="display:none;">
-      <div class="empty-icon">📄</div>
-      <div class="empty-text">No PDFs yet</div>
-      <div class="empty-sub">Add PDFs to the "PDFS" tab in the Google Sheet.</div>
-    </div>
-  </div>
+
 
   <!-- Checkout Log Tab -->
   <div class="tab-panel" id="panel-logs">
@@ -385,14 +365,12 @@
 // ─── CONFIG ───
 const SHEET_ID = '1tarzoeTPmF7At2B5a0yJJ9NzcrjtnTuXUgr-71xVHfk';
 const BOOKS_GID = '0';
-const PDFS_GID = '1691776306';
 const LOGS_GID = '1496095557';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhSA80uEkq3F9rPsD0fg47tQqh0c7f8-1Gd8Aa2VsOjbF5Bn0iGd89oUnCUSV6Qm42/exec';
 const CSV_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=`;
 
 // ─── STATE ───
 let books = [];
-let pdfs = [];
 let logs = [];
 
 
@@ -449,9 +427,8 @@ async function fetchCSV(gid) {
 
 async function loadData() {
   try {
-    const [booksCSV, pdfsCSV, logsCSV] = await Promise.all([
+    const [booksCSV, logsCSV] = await Promise.all([
       fetchCSV(BOOKS_GID),
-      fetchCSV(PDFS_GID),
       fetchCSV(LOGS_GID)
     ]);
 
@@ -466,17 +443,6 @@ async function loadData() {
       category: (b.category || '').trim(),
       owner: b.book_owner || '',
       ownerFav: (b.owner_fav || '').toString().toUpperCase() === 'TRUE' || b.owner_fav === '1' || (b.owner_fav || '').toString().toUpperCase() === 'YES'
-    }));
-
-    pdfs = parseCSV(pdfsCSV).filter(p => p.title).map(p => ({
-      title: p.title || '',
-      author: p.author || '',
-      cover: p.cover_url || '',
-      summary: p.summary || '',
-      rating: parseFloat(p.goodreads_rating) || 0,
-      genre: p.genre || '',
-      totalPages: parseInt(p.total_pages) || 0,
-      category: (p.category || '').trim()
     }));
 
     logs = parseCSV(logsCSV).filter(l => l.reader_name || l.book_title).map(l => ({
@@ -544,18 +510,15 @@ function render() {
   renderStats();
   renderCategoryFilters();
   renderBooks();
-  renderPdfs();
   renderLogs();
   renderForms();
   document.getElementById('booksLoading').style.display = 'none';
-  document.getElementById('pdfsLoading').style.display = 'none';
 }
 
 function renderStats() {
   const activeCheckouts = logs.filter(l => l.status === 'reading' || l.status === 'requested');
 
   document.getElementById('statBooks').textContent = books.length;
-  document.getElementById('statPdfs').textContent = pdfs.length;
   document.getElementById('statCheckedOut').textContent = activeCheckouts.length;
 }
 
@@ -613,35 +576,6 @@ function renderBooks() {
             <div class="book-meta" style="margin-top:6px;">
               ${b.genre ? `<span class="genre-badge">${b.genre}</span>` : ''}
               ${b.totalPages ? `<span class="pages-badge">${b.totalPages}p</span>` : ''}
-            </div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function renderPdfs() {
-  const grid = document.getElementById('pdfGrid');
-  if (pdfs.length === 0) {
-    grid.style.display = 'none';
-    document.getElementById('pdfsEmpty').style.display = 'block';
-    return;
-  }
-  document.getElementById('pdfsEmpty').style.display = 'none';
-  grid.style.display = '';
-
-  grid.innerHTML = pdfs.map((p, i) => {
-    return `
-      <div class="pdf-card" onclick="openModal(${i},'pdf')">
-        <div class="book-card-inner">
-          <div class="pdf-icon">📄</div>
-          <div class="book-info">
-            <div class="book-title">${p.title}</div>
-            <div class="book-author">by ${p.author}</div>
-            ${p.rating ? '<div style="margin-bottom:6px;">'+renderStars(p.rating)+'</div>' : ''}
-            <div class="book-meta">
-              ${p.genre ? `<span class="genre-badge">${p.genre}</span>` : ''}
-              ${p.totalPages ? `<span class="pages-badge">${p.totalPages}p</span>` : ''}
             </div>
           </div>
         </div>
@@ -793,39 +727,24 @@ function applyFilters() {
   });
 }
 
-function filterPdfs() {
-  const query = (document.getElementById('pdfSearch').value || '').toLowerCase();
-  const cards = document.querySelectorAll('#pdfGrid .pdf-card');
-  cards.forEach((card, i) => {
-    const p = pdfs[i];
-    const match = !query ||
-      p.title.toLowerCase().includes(query) ||
-      p.author.toLowerCase().includes(query) ||
-      p.genre.toLowerCase().includes(query);
-    card.style.display = match ? '' : 'none';
-  });
-}
-
 // ─── MODAL ───
 let currentModalBook = null;
 let currentModalType = null;
 
 function openModal(idx, type) {
-  const item = type === 'pdf' ? pdfs[idx] : books[idx];
+  const item = books[idx];
   currentModalBook = item;
-  currentModalType = type;
-  const checkouts = type === 'pdf' ? [] : getBookCheckouts(item.title);
+  currentModalType = 'book';
+  const checkouts = getBookCheckouts(item.title);
 
-  document.getElementById('modalCover').innerHTML = type === 'pdf'
-    ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;background:linear-gradient(135deg,var(--teal),var(--blue));border-radius:10px;">📄</div>'
-    : coverHTML(item);
+  document.getElementById('modalCover').innerHTML = coverHTML(item);
   document.getElementById('modalTitle').textContent = item.title;
   document.getElementById('modalAuthor').textContent = 'by ' + item.author;
   document.getElementById('modalStars').innerHTML = renderStars(item.rating);
 
-  const status = type === 'pdf' ? null : getBookStatus(item.title);
+  const status = getBookStatus(item.title);
   let metaHTML = '';
-  if (type !== 'pdf' && status) {
+  if (status) {
     const sc = status === 'available' ? 'available' : status === 'requested' ? 'requested' : 'checked-out';
     const sl = status === 'available' ? '✅ Available' : status === 'requested' ? '🔖 Requested' : '📤 Checked Out';
     metaHTML += `<span class="status-badge ${sc}">${sl}</span>`;
@@ -843,10 +762,8 @@ function openModal(idx, type) {
   const msgEl = document.getElementById('modalMsg');
   msgEl.style.display = 'none';
 
-  if (type === 'pdf') {
-    actionsSection.style.display = 'none';
-  } else {
-    actionsSection.style.display = '';
+  actionsSection.style.display = '';
+  {
     const members = [...new Set(logs.map(l => l.name).concat(books.map(b => b.owner)).filter(Boolean))].sort();
     const memberOptions = '<option value="">Select your name…</option>' +
       members.map(m => `<option value="${m}">${m}</option>`).join('') +
@@ -896,13 +813,9 @@ function openModal(idx, type) {
   // ─── CHECKOUT HISTORY ───
   const section = document.getElementById('modalCheckouts');
   const list = document.getElementById('modalCheckoutList');
-  if (type === 'pdf' || checkouts.length === 0) {
-    if (type === 'pdf') {
-      section.style.display = 'none';
-    } else {
-      section.style.display = '';
-      list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0;">No one has checked out this book yet.</div>';
-    }
+  if (checkouts.length === 0) {
+    section.style.display = '';
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0;">No one has checked out this book yet.</div>';
   } else {
     section.style.display = '';
     list.innerHTML = checkouts.map(l => {
