@@ -707,31 +707,51 @@ function renderLogs() {
 window.addEventListener('resize', () => { if (logs.length) renderLogs(); });
 
 // ─── FILTERS ───
-let activeFilter = 'all';
+let activeFilters = new Set();
 
 function setFilter(filter) {
-  activeFilter = filter;
-  document.querySelectorAll('.cat-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.filter === filter);
-  });
+  if (filter === 'all') {
+    activeFilters.clear();
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === 'all');
+    });
+  } else {
+    // Toggle the filter
+    if (activeFilters.has(filter)) {
+      activeFilters.delete(filter);
+    } else {
+      activeFilters.add(filter);
+    }
+    // Update button states
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      if (btn.dataset.filter === 'all') {
+        btn.classList.toggle('active', activeFilters.size === 0);
+      } else {
+        btn.classList.toggle('active', activeFilters.has(btn.dataset.filter));
+      }
+    });
+  }
   applyFilters();
 }
 
 function bookMatchesFilter(b) {
-  if (activeFilter === 'all') return true;
-  const [type, val] = activeFilter.split(':');
-  if (type === 'cat') return (b.category||'').toLowerCase() === val;
-  if (type === 'genre') return (b.genre||'').toLowerCase() === val;
-  if (type === 'owner') return (b.owner||'').toLowerCase() === val;
-  return true;
+  if (activeFilters.size === 0) return true;
+  for (const filter of activeFilters) {
+    const [type, ...rest] = filter.split(':');
+    const val = rest.join(':');
+    if (type === 'cat' && (b.category||'').toLowerCase() === val) return true;
+    if (type === 'genre' && (b.genre||'').toLowerCase() === val) return true;
+    if (type === 'owner' && (b.owner||'').toLowerCase() === val) return true;
+  }
+  return false;
 }
 
 function applyFilters() {
   const query = (document.getElementById('bookSearch').value || '').toLowerCase();
   const grid = document.getElementById('bookGrid');
   const cards = [...grid.querySelectorAll('.book-card')];
+  const hasFilters = activeFilters.size > 0;
 
-  // Score each card: matching filter = priority, then sort
   const scored = cards.map(card => {
     const idx = parseInt(card.dataset.index);
     const b = books[idx];
@@ -746,7 +766,6 @@ function applyFilters() {
     return { card, idx, highlighted, visible };
   });
 
-  // Reorder: highlighted first, then dimmed
   scored.sort((a,b) => {
     if (a.highlighted && !b.highlighted) return -1;
     if (!a.highlighted && b.highlighted) return 1;
@@ -755,7 +774,7 @@ function applyFilters() {
 
   scored.forEach(({ card, highlighted, visible }) => {
     card.style.display = visible ? '' : 'none';
-    if (activeFilter === 'all') {
+    if (!hasFilters) {
       card.classList.remove('dimmed');
     } else {
       card.classList.toggle('dimmed', !highlighted);
