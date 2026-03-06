@@ -339,6 +339,7 @@
             <th>Progress</th>
             <th>Status</th>
             <th>Due Back</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="logBody"></tbody>
@@ -694,6 +695,7 @@ function renderLogs() {
         </td>
         <td><span class="log-status ${statusClass}">${statusText}</span></td>
         <td style="color:${overdue ? 'var(--red)' : 'var(--muted)'};font-size:13px;">${formatDate(l.dueBack)}</td>
+        <td>${(l.status === 'reading' || l.status === 'requested') ? `<button onclick="event.stopPropagation();doLogReturn('${l.name.replace(/'/g,"\\'")}','${l.book.replace(/'/g,"\\'")}')" style="background:var(--green);color:white;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">📥 Return</button>` : ''}</td>
       </tr>`;
   }).join('');
 
@@ -724,6 +726,8 @@ function renderLogs() {
             <div style="text-align:right;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;">${l.currentPage}/${l.totalPages} (${Math.min(pct,100)}%)</div>
           </div>` : ''}
         </div>
+        ${(l.status === 'reading' || l.status === 'requested') ? `
+        <button onclick="doLogReturn('${l.name.replace(/'/g,"\\'")}','${l.book.replace(/'/g,"\\'")}')" style="margin-top:10px;width:100%;background:var(--green);color:white;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">📥 Return Book</button>` : ''}
       </div>`;
   }).join('');
 }
@@ -1105,6 +1109,32 @@ async function doModalRequest() {
   msg.style.display = 'block';
   render();
   setTimeout(() => { closeModal(); }, 2000);
+}
+
+// ─── LOG RETURN ───
+async function doLogReturn(name, bookTitle) {
+  const idx = logs.findIndex(l => l.book === bookTitle && l.name === name && (l.status === 'reading' || l.status === 'requested'));
+  if (idx < 0) return;
+
+  const book = books.find(b => b.title === bookTitle);
+  logs[idx].status = 'returned';
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'updateProgress',
+        name,
+        book: bookTitle,
+        currentPage: book ? book.totalPages : 0,
+        totalPages: book ? book.totalPages : 0,
+        status: 'Returned'
+      })
+    });
+  } catch(e) { console.warn('Sheet write failed:', e); }
+
+  render();
 }
 
 // ─── TABS ───
