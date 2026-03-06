@@ -115,6 +115,7 @@
   .log-table th { text-align:left; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; padding:12px 16px; border-bottom:1px solid var(--border); white-space:nowrap; }
   .log-table td { padding:12px 16px; border-bottom:1px solid rgba(30,39,64,0.1); font-size:14px; white-space:nowrap; }
   .log-table tr:hover td { background:var(--card-hover); }
+  .log-table tr.returned td { opacity:0.4; }
   .log-status { font-size:12px; font-weight:600; padding:4px 10px; border-radius:8px; display:inline-block; }
   .log-status.reading { background:rgba(99,102,241,0.15); color:var(--accent); }
   .log-status.requested { background:rgba(168,85,247,0.15); color:var(--purple); }
@@ -123,13 +124,24 @@
 
   /* Checkout Log Cards (mobile) */
   .log-cards { display:none; }
-  .log-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:8px; }
+  .log-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:8px; transition:opacity 0.2s; }
+  .log-card.returned { opacity:0.4; }
   .log-card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
   .log-card-reader { font-size:14px; font-weight:700; }
   .log-card-book { font-size:13px; color:var(--text); margin-bottom:8px; line-height:1.3; }
   .log-card-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
   .log-card-dates { font-size:11px; color:var(--muted); }
   .log-card-progress { flex:1; max-width:120px; }
+  .log-card-buttons { display:flex; gap:6px; margin-top:10px; }
+  .log-card-buttons button { flex:1; border:none; padding:10px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .log-btn-progress { background:var(--accent); color:white; }
+  .log-btn-return { background:var(--green); color:white; }
+
+  /* Progress inline editor */
+  .progress-edit { display:flex; align-items:center; gap:6px; margin-top:8px; padding:10px; background:var(--surface); border-radius:8px; border:1px solid var(--border); }
+  .progress-edit input { width:70px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-family:'JetBrains Mono',monospace; text-align:center; background:var(--card); color:var(--text); }
+  .progress-edit span { font-size:12px; color:var(--muted); }
+  .progress-edit button { padding:6px 12px; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; background:var(--accent); color:white; }
   .progress-bar { height:6px; background:var(--surface); border-radius:3px; overflow:hidden; }
   .progress-fill { height:100%; border-radius:3px; transition:width 0.3s; }
   .progress-fill.reading { background:linear-gradient(90deg,var(--accent),var(--purple)); }
@@ -606,16 +618,19 @@ function renderLogs() {
     return 0;
   });
 
+  const esc = s => s.replace(/'/g, "\\'");
+
   // Desktop table
   tableWrap.style.display = isMobile ? 'none' : '';
   document.getElementById('logTable').style.display = '';
-  body.innerHTML = sorted.map(l => {
+  body.innerHTML = sorted.map((l, si) => {
     const pct = l.totalPages ? Math.round((l.currentPage / l.totalPages) * 100) : 0;
     const overdue = isOverdue(l);
     const statusClass = overdue ? 'overdue' : l.status;
     const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'requested' ? '🔖 Requested' : '✅ Returned';
+    const isActive = l.status === 'reading' || l.status === 'requested';
     return `
-      <tr>
+      <tr class="${l.status === 'returned' ? 'returned' : ''}">
         <td><strong>${l.name}</strong></td>
         <td>${l.book}</td>
         <td>${formatDate(l.startDate)}</td>
@@ -629,19 +644,26 @@ function renderLogs() {
         </td>
         <td><span class="log-status ${statusClass}">${statusText}</span></td>
         <td style="color:${overdue ? 'var(--red)' : 'var(--muted)'};font-size:13px;">${formatDate(l.dueBack)}</td>
-        <td>${(l.status === 'reading' || l.status === 'requested') ? `<button onclick="event.stopPropagation();doLogReturn('${l.name.replace(/'/g,"\\'")}','${l.book.replace(/'/g,"\\'")}')" style="background:var(--green);color:white;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">📥 Return</button>` : ''}</td>
-      </tr>`;
+        <td style="white-space:nowrap;">
+          ${isActive ? `
+            <button onclick="event.stopPropagation();showProgressEditor('${esc(l.name)}','${esc(l.book)}',${l.currentPage},${l.totalPages},'pg-desk-${si}')" style="background:var(--accent);color:white;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-right:4px;">📝</button>
+            <button onclick="event.stopPropagation();doLogReturn('${esc(l.name)}','${esc(l.book)}')" style="background:var(--green);color:white;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">📥 Return</button>
+          ` : ''}
+        </td>
+      </tr>
+      ${isActive ? `<tr id="pg-desk-${si}" style="display:none;"><td colspan="7" style="padding:8px 16px;"><div class="progress-edit"><span>Page</span><input type="number" id="pg-desk-${si}-val" value="${l.currentPage}" min="0" max="${l.totalPages}"><span>of ${l.totalPages}</span><button onclick="doUpdateProgress('${esc(l.name)}','${esc(l.book)}',document.getElementById('pg-desk-${si}-val').value,${l.totalPages})">Save</button></div></td></tr>` : ''}`;
   }).join('');
 
   // Mobile cards
   cards.style.display = isMobile ? 'block' : 'none';
-  cards.innerHTML = sorted.map(l => {
+  cards.innerHTML = sorted.map((l, si) => {
     const pct = l.totalPages ? Math.round((l.currentPage / l.totalPages) * 100) : 0;
     const overdue = isOverdue(l);
     const statusClass = overdue ? 'overdue' : l.status;
     const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'requested' ? '🔖 Requested' : '✅ Returned';
+    const isActive = l.status === 'reading' || l.status === 'requested';
     return `
-      <div class="log-card">
+      <div class="log-card ${l.status === 'returned' ? 'returned' : ''}">
         <div class="log-card-top">
           <span class="log-card-reader">${l.name}</span>
           <span class="log-status ${statusClass}" style="font-size:11px;padding:3px 8px;">${statusText}</span>
@@ -660,8 +682,19 @@ function renderLogs() {
             <div style="text-align:right;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;">${l.currentPage}/${l.totalPages} (${Math.min(pct,100)}%)</div>
           </div>` : ''}
         </div>
-        ${(l.status === 'reading' || l.status === 'requested') ? `
-        <button onclick="doLogReturn('${l.name.replace(/'/g,"\\'")}','${l.book.replace(/'/g,"\\'")}')" style="margin-top:10px;width:100%;background:var(--green);color:white;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">📥 Return Book</button>` : ''}
+        ${isActive ? `
+        <div class="log-card-buttons">
+          <button class="log-btn-progress" onclick="showProgressEditor('${esc(l.name)}','${esc(l.book)}',${l.currentPage},${l.totalPages},'pg-mob-${si}')">📝 Update</button>
+          <button class="log-btn-return" onclick="doLogReturn('${esc(l.name)}','${esc(l.book)}')">📥 Return</button>
+        </div>
+        <div id="pg-mob-${si}" style="display:none;">
+          <div class="progress-edit">
+            <span>Page</span>
+            <input type="number" id="pg-mob-${si}-val" value="${l.currentPage}" min="0" max="${l.totalPages}">
+            <span>of ${l.totalPages}</span>
+            <button onclick="doUpdateProgress('${esc(l.name)}','${esc(l.book)}',document.getElementById('pg-mob-${si}-val').value,${l.totalPages})">Save</button>
+          </div>
+        </div>` : ''}
       </div>`;
   }).join('');
 }
@@ -1022,6 +1055,38 @@ async function doModalRequest() {
   msg.style.display = 'block';
   render();
   setTimeout(() => { closeModal(); }, 2000);
+}
+
+// ─── PROGRESS EDITOR ───
+function showProgressEditor(name, book, currentPage, totalPages, rowId) {
+  const el = document.getElementById(rowId);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+async function doUpdateProgress(name, bookTitle, newPage, totalPages) {
+  const page = parseInt(newPage) || 0;
+  const idx = logs.findIndex(l => l.book === bookTitle && l.name === name && (l.status === 'reading' || l.status === 'requested'));
+  if (idx >= 0) {
+    logs[idx].currentPage = page;
+  }
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'updateProgress',
+        name,
+        book: bookTitle,
+        currentPage: page,
+        totalPages,
+        status: 'Reading'
+      })
+    });
+  } catch(e) { console.warn('Sheet write failed:', e); }
+
+  render();
 }
 
 // ─── LOG RETURN ───
