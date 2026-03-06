@@ -106,17 +106,27 @@
   .pages-badge { font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
   .stars { color:var(--gold); font-size:11px; letter-spacing:0.5px; }
 
-  /* Checkout Log Table */
+  /* Checkout Log Table (desktop) */
   .log-table-wrap { overflow-x:auto; }
   .log-table { width:100%; border-collapse:collapse; }
   .log-table th { text-align:left; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; padding:12px 16px; border-bottom:1px solid var(--border); white-space:nowrap; }
-  .log-table td { padding:12px 16px; border-bottom:1px solid rgba(30,39,64,0.5); font-size:14px; white-space:nowrap; }
+  .log-table td { padding:12px 16px; border-bottom:1px solid rgba(30,39,64,0.1); font-size:14px; white-space:nowrap; }
   .log-table tr:hover td { background:var(--card-hover); }
   .log-status { font-size:12px; font-weight:600; padding:4px 10px; border-radius:8px; display:inline-block; }
   .log-status.reading { background:rgba(99,102,241,0.15); color:var(--accent); }
   .log-status.requested { background:rgba(168,85,247,0.15); color:var(--purple); }
   .log-status.returned { background:rgba(34,197,94,0.15); color:var(--green); }
   .log-status.overdue { background:rgba(239,68,68,0.15); color:var(--red); }
+
+  /* Checkout Log Cards (mobile) */
+  .log-cards { display:none; }
+  .log-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:8px; }
+  .log-card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+  .log-card-reader { font-size:14px; font-weight:700; }
+  .log-card-book { font-size:13px; color:var(--text); margin-bottom:8px; line-height:1.3; }
+  .log-card-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .log-card-dates { font-size:11px; color:var(--muted); }
+  .log-card-progress { flex:1; max-width:120px; }
   .progress-bar { height:6px; background:var(--surface); border-radius:3px; overflow:hidden; }
   .progress-fill { height:100%; border-radius:3px; transition:width 0.3s; }
   .progress-fill.reading { background:linear-gradient(90deg,var(--accent),var(--purple)); }
@@ -319,7 +329,7 @@
 
   <!-- Checkout Log Tab -->
   <div class="tab-panel" id="panel-logs">
-    <div class="log-table-wrap">
+    <div class="log-table-wrap" id="logTableWrap">
       <table class="log-table" id="logTable">
         <thead>
           <tr>
@@ -334,10 +344,11 @@
         <tbody id="logBody"></tbody>
       </table>
     </div>
+    <div class="log-cards" id="logCards"></div>
     <div class="empty-state" id="logsEmpty" style="display:none;">
       <div class="empty-icon">📋</div>
       <div class="empty-text">No checkouts yet</div>
-      <div class="empty-sub">Use the "Check Out / Return" tab to borrow a book.</div>
+      <div class="empty-sub">Click on a book and check it out!</div>
     </div>
   </div>
 
@@ -639,13 +650,17 @@ function renderPdfs() {
 
 function renderLogs() {
   const body = document.getElementById('logBody');
+  const cards = document.getElementById('logCards');
+  const tableWrap = document.getElementById('logTableWrap');
+  const isMobile = window.innerWidth <= 640;
+
   if (logs.length === 0) {
-    document.getElementById('logTable').style.display = 'none';
+    tableWrap.style.display = 'none';
+    cards.style.display = 'none';
     document.getElementById('logsEmpty').style.display = 'block';
     return;
   }
   document.getElementById('logsEmpty').style.display = 'none';
-  document.getElementById('logTable').style.display = '';
 
   // Sort: active first, then by date
   const sorted = [...logs].sort((a,b) => {
@@ -656,6 +671,9 @@ function renderLogs() {
     return 0;
   });
 
+  // Desktop table
+  tableWrap.style.display = isMobile ? 'none' : '';
+  document.getElementById('logTable').style.display = '';
   body.innerHTML = sorted.map(l => {
     const pct = l.totalPages ? Math.round((l.currentPage / l.totalPages) * 100) : 0;
     const overdue = isOverdue(l);
@@ -678,7 +696,40 @@ function renderLogs() {
         <td style="color:${overdue ? 'var(--red)' : 'var(--muted)'};font-size:13px;">${formatDate(l.dueBack)}</td>
       </tr>`;
   }).join('');
+
+  // Mobile cards
+  cards.style.display = isMobile ? 'block' : 'none';
+  cards.innerHTML = sorted.map(l => {
+    const pct = l.totalPages ? Math.round((l.currentPage / l.totalPages) * 100) : 0;
+    const overdue = isOverdue(l);
+    const statusClass = overdue ? 'overdue' : l.status;
+    const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'requested' ? '🔖 Requested' : '✅ Returned';
+    return `
+      <div class="log-card">
+        <div class="log-card-top">
+          <span class="log-card-reader">${l.name}</span>
+          <span class="log-status ${statusClass}" style="font-size:11px;padding:3px 8px;">${statusText}</span>
+        </div>
+        <div class="log-card-book">📖 ${l.book}</div>
+        <div class="log-card-row">
+          <div class="log-card-dates">
+            ${l.startDate ? 'Started ' + formatDate(l.startDate) : ''}
+            ${l.dueBack ? '<br>Due ' + '<span style="color:' + (overdue ? 'var(--red)' : 'inherit') + ';">' + formatDate(l.dueBack) + '</span>' : ''}
+          </div>
+          ${l.status !== 'requested' && l.totalPages ? `
+          <div class="log-card-progress">
+            <div class="progress-bar" style="height:8px;border-radius:4px;">
+              <div class="progress-fill ${pct>=100?'completed':'reading'}" style="width:${Math.min(pct,100)}%;border-radius:4px;"></div>
+            </div>
+            <div style="text-align:right;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;">${l.currentPage}/${l.totalPages} (${Math.min(pct,100)}%)</div>
+          </div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
 }
+
+// Re-render logs on resize to switch between table/cards
+window.addEventListener('resize', () => { if (logs.length) renderLogs(); });
 
 // ─── FILTERS ───
 let activeFilter = 'all';
