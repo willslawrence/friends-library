@@ -69,14 +69,16 @@
   .cat-filters::-webkit-scrollbar { display:none; }
   .cat-btn { padding:5px 12px; border-radius:16px; border:1.5px solid var(--border); background:var(--card); font-size:11px; font-weight:600; cursor:pointer; transition:all 0.2s; color:var(--muted); white-space:nowrap; -webkit-tap-highlight-color:transparent; }
   .cat-btn:hover { border-color:var(--accent); color:var(--accent); }
-  .cat-btn.active { color:#fff; }
-  .cat-btn.active[data-cat="all"] { background:var(--accent); border-color:var(--accent); }
-  .cat-btn.active[data-cat="religious"] { background:#a78bfa; border-color:#a78bfa; }
-  .cat-btn.active[data-cat="thinking"] { background:#60a5fa; border-color:#60a5fa; }
-  .cat-btn.active[data-cat="fiction"] { background:#f97316; border-color:#f97316; }
-  .cat-btn.active[data-cat="reference"] { background:#14b8a6; border-color:#14b8a6; }
-  .cat-btn.active[data-filter="cat:digital pdf"] { background:#0d9488; border-color:#0d9488; }
-  .cat-btn.active[data-filter="cat:kids 10yrs"] { background:#d97706; border-color:#d97706; }
+  .cat-btn.active { color:var(--text); font-weight:700; }
+  .cat-btn.active[data-cat="all"] { background:rgba(99,102,241,0.15); border-color:var(--accent); color:var(--accent); }
+  .cat-btn.active[data-cat="religious"] { background:rgba(167,139,250,0.15); border-color:#a78bfa; color:#7c3aed; }
+  .cat-btn.active[data-cat="thinking"] { background:rgba(96,165,250,0.15); border-color:#60a5fa; color:#2563eb; }
+  .cat-btn.active[data-cat="fiction"] { background:rgba(249,115,22,0.15); border-color:#f97316; color:#c2410c; }
+  .cat-btn.active[data-cat="reference"] { background:rgba(20,184,166,0.15); border-color:#14b8a6; color:#0f766e; }
+  .cat-btn.active[data-filter="cat:digital pdf"] { background:rgba(13,148,136,0.15); border-color:#0d9488; color:#0f766e; }
+  .cat-btn.active[data-filter="cat:kids 10yrs"] { background:rgba(217,119,6,0.15); border-color:#d97706; color:#b45309; }
+  .cat-btn.active[data-filter^="genre:"] { background:rgba(99,102,241,0.12); border-color:var(--accent); color:var(--accent); }
+  .cat-btn.active[data-filter^="owner:"] { background:rgba(99,102,241,0.12); border-color:var(--accent); color:var(--accent); }
 
   /* Book Grid */
   .book-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; }
