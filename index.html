@@ -78,7 +78,7 @@
   .book-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
   .book-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; cursor:pointer; transition:all 0.3s; position:relative; overflow:hidden; }
   .book-card:hover { background:var(--card-hover); border-color:var(--accent); transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,0.08); }
-  .book-card.dimmed { opacity:0.15; filter:grayscale(80%); transform:scale(0.98); pointer-events:none; }
+  .book-card.dimmed { opacity:0.35; filter:grayscale(60%); transform:scale(0.98); }
   .book-card.cat-religious { border-left:3px solid #a78bfa; }
   .book-card.cat-thinking { border-left:3px solid #60a5fa; }
   .book-card.cat-fiction { border-left:3px solid #f97316; }
@@ -332,7 +332,7 @@ const CSV_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx
 let books = [];
 let pdfs = [];
 let logs = [];
-let activeCat = 'all';
+
 
 // ─── CSV PARSER ───
 function parseCSV(text) {
@@ -497,15 +497,22 @@ function renderStats() {
 }
 
 function renderCategoryFilters() {
-  const cats = [...new Set(books.map(b => b.category).filter(Boolean))];
   const container = document.getElementById('catFilters');
-  if (cats.length <= 1) { container.style.display = 'none'; return; }
-  const colorMap = { religious:'#a78bfa', thinking:'#60a5fa', fiction:'#f97316', reference:'#14b8a6' };
-  container.innerHTML = `<button class="cat-btn active" data-cat="all" onclick="filterCat('all')">All</button>` +
-    cats.map(c => {
-      const key = c.toLowerCase();
-      return `<button class="cat-btn" data-cat="${key}" onclick="filterCat('${key}')">${c}</button>`;
-    }).join('');
+  const cats = [...new Set(books.map(b => b.category).filter(Boolean))].sort();
+  const genres = [...new Set(books.map(b => b.genre).filter(Boolean))].sort();
+  const owners = [...new Set(books.map(b => b.owner).filter(Boolean))].sort();
+
+  if (cats.length + genres.length + owners.length === 0) { container.style.display = 'none'; return; }
+
+  let html = `<button class="cat-btn active" data-filter="all" onclick="setFilter('all')">All</button>`;
+
+  if (cats.length > 1) {
+    cats.forEach(c => { html += `<button class="cat-btn" data-filter="cat:${c.toLowerCase()}" onclick="setFilter('cat:${c.toLowerCase()}')">${c}</button>`; });
+  }
+  genres.forEach(g => { html += `<button class="cat-btn" data-filter="genre:${g.toLowerCase()}" onclick="setFilter('genre:${g.toLowerCase()}')" style="border-style:dashed;">${g}</button>`; });
+  owners.forEach(o => { html += `<button class="cat-btn" data-filter="owner:${o.toLowerCase()}" onclick="setFilter('owner:${o.toLowerCase()}')" style="border-radius:8px;">👤 ${o}</button>`; });
+
+  container.innerHTML = html;
 }
 
 function renderBooks() {
@@ -622,27 +629,60 @@ function renderLogs() {
 }
 
 // ─── FILTERS ───
-function filterCat(cat) {
-  activeCat = cat;
+let activeFilter = 'all';
+
+function setFilter(filter) {
+  activeFilter = filter;
   document.querySelectorAll('.cat-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.cat === cat);
+    btn.classList.toggle('active', btn.dataset.filter === filter);
   });
   applyFilters();
 }
 
+function bookMatchesFilter(b) {
+  if (activeFilter === 'all') return true;
+  const [type, val] = activeFilter.split(':');
+  if (type === 'cat') return (b.category||'').toLowerCase() === val;
+  if (type === 'genre') return (b.genre||'').toLowerCase() === val;
+  if (type === 'owner') return (b.owner||'').toLowerCase() === val;
+  return true;
+}
+
 function applyFilters() {
   const query = (document.getElementById('bookSearch').value || '').toLowerCase();
-  const cards = document.querySelectorAll('#bookGrid .book-card');
-  cards.forEach(card => {
+  const grid = document.getElementById('bookGrid');
+  const cards = [...grid.querySelectorAll('.book-card')];
+
+  // Score each card: matching filter = priority, then sort
+  const scored = cards.map(card => {
     const idx = parseInt(card.dataset.index);
     const b = books[idx];
-    const catMatch = activeCat === 'all' || (b.category||'').toLowerCase() === activeCat;
+    const filterMatch = bookMatchesFilter(b);
     const searchMatch = !query ||
       b.title.toLowerCase().includes(query) ||
       b.author.toLowerCase().includes(query) ||
       b.genre.toLowerCase().includes(query) ||
       (b.owner||'').toLowerCase().includes(query);
-    card.classList.toggle('dimmed', !(catMatch && searchMatch));
+    const visible = searchMatch;
+    const highlighted = filterMatch && searchMatch;
+    return { card, idx, highlighted, visible };
+  });
+
+  // Reorder: highlighted first, then dimmed
+  scored.sort((a,b) => {
+    if (a.highlighted && !b.highlighted) return -1;
+    if (!a.highlighted && b.highlighted) return 1;
+    return a.idx - b.idx;
+  });
+
+  scored.forEach(({ card, highlighted, visible }) => {
+    card.style.display = visible ? '' : 'none';
+    if (activeFilter === 'all') {
+      card.classList.remove('dimmed');
+    } else {
+      card.classList.toggle('dimmed', !highlighted);
+    }
+    grid.appendChild(card);
   });
 }
 
@@ -722,6 +762,7 @@ function openModal(idx, type) {
             <input type="date" id="mCheckoutDue" value="${dueVal}">
           </div>
           <button class="modal-action-btn checkout modal-inline-submit" onclick="doModalCheckout()">📤 Check Out</button>
+          <p style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.5;">This sends a check out request to the owner — it will be up to you to physically get the book. Please keep the site up to date when you return the book so others know it's available.</p>
         </div>`;
     } else if (status === 'reading') {
       // Book is checked out → Return + Request Next buttons
