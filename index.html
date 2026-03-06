@@ -162,6 +162,26 @@
   .form-msg.success { display:block; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); color:var(--green); }
   .form-msg.error { display:block; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#ef4444; }
 
+  /* Modal action buttons */
+  .modal-actions-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .modal-action-btn { padding:12px 24px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif; border:none; color:white; flex:1; min-width:140px; text-align:center; }
+  .modal-action-btn:hover { transform:translateY(-1px); }
+  .modal-action-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+  .modal-action-btn.checkout { background:linear-gradient(135deg,var(--accent),var(--purple)); }
+  .modal-action-btn.checkout:hover { box-shadow:0 8px 20px rgba(99,102,241,0.3); }
+  .modal-action-btn.return { background:linear-gradient(135deg,var(--green),var(--teal)); }
+  .modal-action-btn.return:hover { box-shadow:0 8px 20px rgba(34,197,94,0.3); }
+  .modal-action-btn.request { background:linear-gradient(135deg,var(--purple),#c084fc); }
+  .modal-action-btn.request:hover { box-shadow:0 8px 20px rgba(124,58,237,0.3); }
+  .modal-inline-form { margin-top:12px; padding:16px; background:var(--surface); border-radius:12px; border:1px solid var(--border); }
+  .modal-inline-form .form-group { margin-bottom:12px; }
+  .modal-inline-form .form-group:last-of-type { margin-bottom:0; }
+  .modal-inline-form .form-group label { display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  .modal-inline-form input, .modal-inline-form select { width:100%; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; outline:none; }
+  .modal-inline-form input:focus, .modal-inline-form select:focus { border-color:var(--accent); }
+  .modal-inline-form select { cursor:pointer; -webkit-appearance:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238892a8' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
+  .modal-inline-submit { margin-top:12px; width:100%; }
+
   /* PDF grid */
   .pdf-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
   .pdf-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; cursor:pointer; transition:all 0.3s; border-left:3px solid var(--teal); }
@@ -212,7 +232,7 @@
   <div class="tab active" data-tab="books">📚 Books</div>
   <div class="tab" data-tab="pdfs">📄 PDFs</div>
   <div class="tab" data-tab="logs">📋 Check Out Log</div>
-  <div class="tab" data-tab="checkout">🔄 Check Out / Return</div>
+
 </div>
 
 <div class="content">
@@ -271,68 +291,6 @@
     </div>
   </div>
 
-  <!-- Checkout / Return Tab -->
-  <div class="tab-panel" id="panel-checkout">
-    <div style="display:flex;gap:32px;flex-wrap:wrap;">
-      <!-- Check Out Form -->
-      <div class="form-panel" style="flex:1;min-width:280px;">
-        <h2>📤 Check Out a Book</h2>
-        <p class="desc">Borrow a book from the library. Pick your name, choose a book, and set a return date.</p>
-        <div class="form-group">
-          <label>Your Name</label>
-          <select id="checkoutName"><option value="">Select your name…</option></select>
-          <div style="margin-top:8px;">
-            <span style="font-size:12px;color:var(--muted);">New member?</span>
-            <input type="text" id="newMemberName" placeholder="Type your name…" style="display:none;margin-top:6px;">
-            <button onclick="toggleNewMember()" id="newMemberBtn" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;">+ Add yourself</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Book</label>
-          <select id="checkoutBook"><option value="">Select a book…</option></select>
-        </div>
-        <div class="form-group">
-          <label>Due Back Date</label>
-          <input type="date" id="checkoutDue">
-        </div>
-        <button class="btn-submit" id="checkoutBtn" disabled onclick="doCheckout()">Check Out Book</button>
-        <div class="form-msg" id="checkoutMsg"></div>
-      </div>
-
-      <!-- Return / Update Form -->
-      <div class="form-panel" style="flex:1;min-width:280px;">
-        <h2>📥 Return or Update</h2>
-        <p class="desc">Return a book or update your reading progress.</p>
-        <div class="form-group">
-          <label>Your Name</label>
-          <select id="returnName"><option value="">Select your name…</option></select>
-        </div>
-        <div class="form-group">
-          <label>Book</label>
-          <select id="returnBook"><option value="">Select a checked-out book…</option></select>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Current Page</label>
-            <input type="number" id="returnPage" placeholder="e.g. 142" min="0">
-          </div>
-          <div class="form-group">
-            <label>Total Pages</label>
-            <input type="number" id="returnTotal" disabled>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:8px;">
-          <label>Progress</label>
-          <div class="progress-bar" style="height:10px;border-radius:5px;">
-            <div class="progress-fill reading" id="returnProgress" style="width:0%;border-radius:5px;"></div>
-          </div>
-          <div style="text-align:right;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;" id="returnPct">0%</div>
-        </div>
-        <button class="btn-submit btn-return" id="returnBtn" disabled onclick="doReturn()">Return / Update</button>
-        <div class="form-msg" id="returnMsg"></div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Book Detail Modal -->
@@ -349,6 +307,11 @@
       </div>
     </div>
     <div class="modal-summary" id="modalSummary"></div>
+    <!-- Action Buttons -->
+    <div class="modal-section" id="modalActions">
+      <div id="modalActionContent"></div>
+      <div class="form-msg" id="modalMsg" style="display:none;"></div>
+    </div>
     <div class="modal-section" id="modalCheckouts">
       <h3>📋 Checkout History</h3>
       <div id="modalCheckoutList"></div>
@@ -697,8 +660,13 @@ function filterPdfs() {
 }
 
 // ─── MODAL ───
+let currentModalBook = null;
+let currentModalType = null;
+
 function openModal(idx, type) {
   const item = type === 'pdf' ? pdfs[idx] : books[idx];
+  currentModalBook = item;
+  currentModalType = type;
   const checkouts = type === 'pdf' ? [] : getBookCheckouts(item.title);
 
   document.getElementById('modalCover').innerHTML = type === 'pdf'
@@ -722,6 +690,62 @@ function openModal(idx, type) {
 
   document.getElementById('modalSummary').textContent = item.summary || 'No summary available.';
 
+  // ─── ACTION BUTTONS ───
+  const actionsSection = document.getElementById('modalActions');
+  const actionContent = document.getElementById('modalActionContent');
+  const msgEl = document.getElementById('modalMsg');
+  msgEl.style.display = 'none';
+
+  if (type === 'pdf') {
+    actionsSection.style.display = 'none';
+  } else {
+    actionsSection.style.display = '';
+    const members = [...new Set(logs.map(l => l.name).concat(books.map(b => b.owner)).filter(Boolean))].sort();
+    const memberOptions = '<option value="">Select your name…</option>' +
+      members.map(m => `<option value="${m}">${m}</option>`).join('') +
+      '<option value="__new__">+ Add yourself…</option>';
+    const due30 = new Date(); due30.setDate(due30.getDate() + 30);
+    const dueVal = due30.toISOString().slice(0,10);
+
+    if (status === 'available') {
+      // Book is available → show Check Out button + inline form
+      actionContent.innerHTML = `
+        <h3 style="margin-bottom:12px;">📤 Check Out This Book</h3>
+        <div class="modal-inline-form" id="checkoutForm">
+          <div class="form-group">
+            <label>Your Name</label>
+            <select id="mCheckoutName" onchange="onModalNameChange(this)">${memberOptions}</select>
+            <input type="text" id="mCheckoutNewName" placeholder="Type your name…" style="display:none;margin-top:6px;">
+          </div>
+          <div class="form-group">
+            <label>Due Back Date</label>
+            <input type="date" id="mCheckoutDue" value="${dueVal}">
+          </div>
+          <button class="modal-action-btn checkout modal-inline-submit" onclick="doModalCheckout()">📤 Check Out</button>
+        </div>`;
+    } else if (status === 'reading') {
+      // Book is checked out → Return + Request Next buttons
+      const activeLog = checkouts.find(l => l.status === 'reading');
+      const readerName = activeLog ? activeLog.name : 'someone';
+      actionContent.innerHTML = `
+        <h3 style="margin-bottom:12px;">This book is with ${readerName}</h3>
+        <div class="modal-actions-row">
+          <button class="modal-action-btn return" onclick="showReturnForm()">📥 Return Book</button>
+          <button class="modal-action-btn request" onclick="showRequestForm()">🔖 Request Next in Line</button>
+        </div>
+        <div id="modalInlineFormArea"></div>`;
+    } else {
+      // Requested status
+      actionContent.innerHTML = `
+        <h3 style="margin-bottom:12px;">🔖 This book has been requested</h3>
+        <div class="modal-actions-row">
+          <button class="modal-action-btn return" onclick="showReturnForm()">📥 Return Book</button>
+        </div>
+        <div id="modalInlineFormArea"></div>`;
+    }
+  }
+
+  // ─── CHECKOUT HISTORY ───
   const section = document.getElementById('modalCheckouts');
   const list = document.getElementById('modalCheckoutList');
   if (type === 'pdf' || checkouts.length === 0) {
@@ -756,130 +780,89 @@ function openModal(idx, type) {
   document.getElementById('modalOverlay').classList.add('open');
 }
 
-document.getElementById('modalClose').onclick = () => document.getElementById('modalOverlay').classList.remove('open');
-document.getElementById('modalOverlay').onclick = (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); };
-
-// ─── FORMS ───
-function renderForms() {
-  const members = [...new Set(logs.map(l => l.name).concat(books.map(b => b.owner)).filter(Boolean))].sort();
-
-  // Checkout form
-  const checkoutName = document.getElementById('checkoutName');
-  checkoutName.innerHTML = '<option value="">Select your name…</option>' +
-    members.map(m => `<option value="${m}">${m}</option>`).join('');
-
-  const availableBooks = books.filter(b => getBookStatus(b.title) === 'available');
-  const checkoutBook = document.getElementById('checkoutBook');
-  checkoutBook.innerHTML = '<option value="">Select a book…</option>' +
-    availableBooks.map(b => `<option value="${b.title}">${b.title}${b.owner ? ' ('+b.owner+"'s)" : ''}</option>`).join('');
-
-  // Default due date = 30 days from now
-  const due = new Date();
-  due.setDate(due.getDate() + 30);
-  document.getElementById('checkoutDue').value = due.toISOString().slice(0,10);
-
-  // Return form
-  const returnName = document.getElementById('returnName');
-  const activeMembers = [...new Set(logs.filter(l => l.status === 'reading' || l.status === 'requested').map(l => l.name))].sort();
-  returnName.innerHTML = '<option value="">Select your name…</option>' +
-    activeMembers.map(m => `<option value="${m}">${m}</option>`).join('');
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  currentModalBook = null;
+  currentModalType = null;
 }
 
-document.getElementById('checkoutName').onchange = validateCheckout;
-document.getElementById('checkoutBook').onchange = validateCheckout;
-document.getElementById('newMemberName').oninput = validateCheckout;
+document.getElementById('modalClose').onclick = closeModal;
+document.getElementById('modalOverlay').onclick = (e) => { if (e.target === e.currentTarget) closeModal(); };
 
-function getCheckoutName() {
-  const input = document.getElementById('newMemberName');
-  if (input.style.display !== 'none' && input.value.trim()) return input.value.trim();
-  return document.getElementById('checkoutName').value;
-}
-
-function toggleNewMember() {
-  const input = document.getElementById('newMemberName');
-  const btn = document.getElementById('newMemberBtn');
-  const select = document.getElementById('checkoutName');
-  if (input.style.display === 'none') {
-    input.style.display = 'block';
-    btn.textContent = '← Use existing name';
-    select.style.display = 'none';
-    input.focus();
+// ─── MODAL NAME CHANGE (show new-name input if "+ Add yourself" selected) ───
+function onModalNameChange(select) {
+  const newInput = select.parentElement.querySelector('input[type="text"]');
+  if (select.value === '__new__') {
+    if (newInput) { newInput.style.display = 'block'; newInput.focus(); }
   } else {
-    input.style.display = 'none';
-    btn.textContent = '+ Add yourself';
-    select.style.display = 'block';
-    input.value = '';
+    if (newInput) { newInput.style.display = 'none'; newInput.value = ''; }
   }
-  validateCheckout();
 }
 
-function validateCheckout() {
-  const name = getCheckoutName();
-  const book = document.getElementById('checkoutBook').value;
-  document.getElementById('checkoutBtn').disabled = !(name && book);
+function getModalName(selectId, inputId) {
+  const sel = document.getElementById(selectId);
+  const inp = document.getElementById(inputId);
+  if (sel.value === '__new__' && inp && inp.value.trim()) return inp.value.trim();
+  if (sel.value && sel.value !== '__new__') return sel.value;
+  return '';
 }
 
-document.getElementById('returnName').onchange = updateReturnBooks;
-
-function updateReturnBooks() {
-  const name = document.getElementById('returnName').value;
-  const myBooks = logs.filter(l => l.name === name && (l.status === 'reading' || l.status === 'requested'));
-  const returnBook = document.getElementById('returnBook');
-  returnBook.innerHTML = '<option value="">Select a checked-out book…</option>' +
-    myBooks.map(l => `<option value="${l.book}">${l.book}</option>`).join('');
-  document.getElementById('returnBtn').disabled = true;
+// ─── SHOW RETURN FORM (inline in modal) ───
+function showReturnForm() {
+  const area = document.getElementById('modalInlineFormArea');
+  const activeLog = logs.find(l => l.book === currentModalBook.title && (l.status === 'reading' || l.status === 'requested'));
+  const readerName = activeLog ? activeLog.name : '';
+  area.innerHTML = `
+    <div class="modal-inline-form" style="margin-top:12px;">
+      <div class="form-group">
+        <label>Returning as</label>
+        <input type="text" id="mReturnName" value="${readerName}" placeholder="Your name">
+      </div>
+      <button class="modal-action-btn return modal-inline-submit" onclick="doModalReturn()">✅ Confirm Return</button>
+    </div>`;
 }
 
-document.getElementById('returnBook').onchange = function() {
-  const name = document.getElementById('returnName').value;
-  const bookTitle = this.value;
-  const log = logs.find(l => l.name === name && l.book === bookTitle);
-  if (log) {
-    document.getElementById('returnPage').value = log.currentPage || '';
-    document.getElementById('returnTotal').value = log.totalPages || '';
-    updateReturnProgress();
-  }
-  document.getElementById('returnBtn').disabled = !(name && bookTitle);
-};
-
-document.getElementById('returnPage').oninput = updateReturnProgress;
-
-function updateReturnProgress() {
-  const cur = parseInt(document.getElementById('returnPage').value) || 0;
-  const tot = parseInt(document.getElementById('returnTotal').value) || 1;
-  const pct = Math.min(Math.round((cur / tot) * 100), 100);
-  document.getElementById('returnProgress').style.width = pct + '%';
-  document.getElementById('returnPct').textContent = pct + '%';
-  const fill = document.getElementById('returnProgress');
-  if (pct >= 100) { fill.classList.remove('reading'); fill.classList.add('completed'); }
-  else { fill.classList.add('reading'); fill.classList.remove('completed'); }
+// ─── SHOW REQUEST FORM (inline in modal) ───
+function showRequestForm() {
+  const area = document.getElementById('modalInlineFormArea');
+  const members = [...new Set(logs.map(l => l.name).concat(books.map(b => b.owner)).filter(Boolean))].sort();
+  const memberOptions = '<option value="">Select your name…</option>' +
+    members.map(m => `<option value="${m}">${m}</option>`).join('') +
+    '<option value="__new__">+ Add yourself…</option>';
+  area.innerHTML = `
+    <div class="modal-inline-form" style="margin-top:12px;">
+      <div class="form-group">
+        <label>Your Name</label>
+        <select id="mRequestName" onchange="onModalNameChange(this)">${memberOptions}</select>
+        <input type="text" id="mRequestNewName" placeholder="Type your name…" style="display:none;margin-top:6px;">
+      </div>
+      <button class="modal-action-btn request modal-inline-submit" onclick="doModalRequest()">🔖 Request Next in Line</button>
+    </div>`;
 }
+
+// ─── FORMS (stub for render compatibility) ───
+function renderForms() {}
 
 // ─── ACTIONS ───
-async function doCheckout() {
-  const name = getCheckoutName();
-  const bookTitle = document.getElementById('checkoutBook').value;
-  const dueBack = document.getElementById('checkoutDue').value;
-  const book = books.find(b => b.title === bookTitle);
-  const msg = document.getElementById('checkoutMsg');
-  const btn = document.getElementById('checkoutBtn');
+async function doModalCheckout() {
+  const name = getModalName('mCheckoutName', 'mCheckoutNewName');
+  const dueBack = document.getElementById('mCheckoutDue').value;
+  const bookTitle = currentModalBook.title;
+  const msg = document.getElementById('modalMsg');
 
-  if (!name || !bookTitle) return;
-  btn.disabled = true;
-  btn.textContent = 'Checking out…';
+  if (!name) { msg.className = 'form-msg error'; msg.textContent = 'Please enter your name.'; msg.style.display = 'block'; return; }
 
   const newLog = {
     name,
     book: bookTitle,
     startDate: new Date().toISOString().slice(0,10),
     currentPage: 0,
-    totalPages: book ? book.totalPages : 0,
+    totalPages: currentModalBook.totalPages || 0,
     status: 'reading',
     dueBack
   };
   logs.push(newLog);
 
-  // Write to sheet
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -897,34 +880,23 @@ async function doCheckout() {
     });
   } catch(e) { console.warn('Sheet write failed:', e); }
 
-  render();
   msg.className = 'form-msg success';
   msg.textContent = `📚 "${bookTitle}" checked out to ${name}! Due back ${formatDate(dueBack)}.`;
   msg.style.display = 'block';
-  btn.disabled = false;
-  btn.textContent = 'Check Out Book';
-  setTimeout(() => { msg.style.display = 'none'; }, 5000);
+  render();
+  setTimeout(() => { closeModal(); }, 2000);
 }
 
-async function doReturn() {
-  const name = document.getElementById('returnName').value;
-  const bookTitle = document.getElementById('returnBook').value;
-  const currentPage = parseInt(document.getElementById('returnPage').value) || 0;
-  const totalPages = parseInt(document.getElementById('returnTotal').value) || 0;
-  const msg = document.getElementById('returnMsg');
-  const btn = document.getElementById('returnBtn');
+async function doModalReturn() {
+  const name = document.getElementById('mReturnName').value.trim();
+  const bookTitle = currentModalBook.title;
+  const msg = document.getElementById('modalMsg');
 
-  if (!name || !bookTitle) return;
-  btn.disabled = true;
-  btn.textContent = 'Updating…';
+  if (!name) { msg.className = 'form-msg error'; msg.textContent = 'Please enter your name.'; msg.style.display = 'block'; return; }
 
-  const isComplete = currentPage >= totalPages && totalPages > 0;
-  const status = isComplete ? 'returned' : 'reading';
-
-  const idx = logs.findIndex(l => l.name === name && l.book === bookTitle && (l.status === 'reading' || l.status === 'requested'));
+  const idx = logs.findIndex(l => l.book === bookTitle && (l.status === 'reading' || l.status === 'requested'));
   if (idx >= 0) {
-    logs[idx].currentPage = currentPage;
-    logs[idx].status = status;
+    logs[idx].status = 'returned';
   }
 
   try {
@@ -935,22 +907,60 @@ async function doReturn() {
         action: 'updateProgress',
         name,
         book: bookTitle,
-        currentPage,
-        totalPages,
-        status: status.charAt(0).toUpperCase() + status.slice(1)
+        currentPage: currentModalBook.totalPages || 0,
+        totalPages: currentModalBook.totalPages || 0,
+        status: 'Returned'
       })
     });
   } catch(e) { console.warn('Sheet write failed:', e); }
 
-  render();
   msg.className = 'form-msg success';
-  msg.textContent = isComplete
-    ? `✅ "${bookTitle}" returned! Thanks, ${name}!`
-    : `📖 Progress updated — page ${currentPage} of ${totalPages}`;
+  msg.textContent = `✅ "${bookTitle}" returned! Thanks, ${name}!`;
   msg.style.display = 'block';
-  btn.disabled = false;
-  btn.textContent = 'Return / Update';
-  setTimeout(() => { msg.style.display = 'none'; }, 5000);
+  render();
+  setTimeout(() => { closeModal(); }, 2000);
+}
+
+async function doModalRequest() {
+  const name = getModalName('mRequestName', 'mRequestNewName');
+  const bookTitle = currentModalBook.title;
+  const msg = document.getElementById('modalMsg');
+
+  if (!name) { msg.className = 'form-msg error'; msg.textContent = 'Please enter your name.'; msg.style.display = 'block'; return; }
+
+  const newLog = {
+    name,
+    book: bookTitle,
+    startDate: new Date().toISOString().slice(0,10),
+    currentPage: 0,
+    totalPages: currentModalBook.totalPages || 0,
+    status: 'requested',
+    dueBack: ''
+  };
+  logs.push(newLog);
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'checkout',
+        name,
+        book: bookTitle,
+        startDate: newLog.startDate,
+        currentPage: 0,
+        totalPages: newLog.totalPages,
+        status: 'Requested',
+        dueBack: ''
+      })
+    });
+  } catch(e) { console.warn('Sheet write failed:', e); }
+
+  msg.className = 'form-msg success';
+  msg.textContent = `🔖 ${name}, you're next in line for "${bookTitle}"!`;
+  msg.style.display = 'block';
+  render();
+  setTimeout(() => { closeModal(); }, 2000);
 }
 
 // ─── TABS ───
