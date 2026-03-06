@@ -131,6 +131,9 @@ function doPost(e) {
             (rows[i][5] === 'Reading' || rows[i][5] === 'Requested')) {
           logsSheet.getRange(i + 1, 4).setValue(data.currentPage);
           logsSheet.getRange(i + 1, 6).setValue(data.status || 'Reading');
+          if (data.dueBack) {
+            logsSheet.getRange(i + 1, 7).setValue(data.dueBack);
+          }
           
           // If returned, notify owner
           if (data.status === 'Returned') {

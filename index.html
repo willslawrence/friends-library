@@ -651,7 +651,7 @@ function renderLogs() {
           ` : ''}
         </td>
       </tr>
-      ${isActive ? `<tr id="pg-desk-${si}" style="display:none;"><td colspan="7" style="padding:8px 16px;"><div class="progress-edit"><span>Page</span><input type="number" id="pg-desk-${si}-val" value="${l.currentPage}" min="0" max="${l.totalPages}"><span>of ${l.totalPages}</span><button onclick="doUpdateProgress('${esc(l.name)}','${esc(l.book)}',document.getElementById('pg-desk-${si}-val').value,${l.totalPages})">Save</button></div></td></tr>` : ''}`;
+      ${isActive ? `<tr id="pg-desk-${si}" style="display:none;"><td colspan="7" style="padding:8px 16px;"><div class="progress-edit"><span>Page</span><input type="number" id="pg-desk-${si}-val" value="${l.currentPage}" min="0" max="${l.totalPages}"><span>of ${l.totalPages}</span><span style="margin-left:8px;">Due</span><input type="date" id="pg-desk-${si}-due" value="${l.dueBack}" style="width:auto;"><button onclick="doUpdateProgress('${esc(l.name)}','${esc(l.book)}',document.getElementById('pg-desk-${si}-val').value,${l.totalPages},document.getElementById('pg-desk-${si}-due').value)">Save</button></div></td></tr>` : ''}`;
   }).join('');
 
   // Mobile cards
@@ -688,11 +688,15 @@ function renderLogs() {
           <button class="log-btn-return" onclick="doLogReturn('${esc(l.name)}','${esc(l.book)}')">📥 Return</button>
         </div>
         <div id="pg-mob-${si}" style="display:none;">
-          <div class="progress-edit">
+          <div class="progress-edit" style="flex-wrap:wrap;">
             <span>Page</span>
             <input type="number" id="pg-mob-${si}-val" value="${l.currentPage}" min="0" max="${l.totalPages}">
             <span>of ${l.totalPages}</span>
-            <button onclick="doUpdateProgress('${esc(l.name)}','${esc(l.book)}',document.getElementById('pg-mob-${si}-val').value,${l.totalPages})">Save</button>
+          </div>
+          <div class="progress-edit" style="margin-top:6px;">
+            <span>Due</span>
+            <input type="date" id="pg-mob-${si}-due" value="${l.dueBack}" style="width:auto;flex:1;">
+            <button onclick="doUpdateProgress('${esc(l.name)}','${esc(l.book)}',document.getElementById('pg-mob-${si}-val').value,${l.totalPages},document.getElementById('pg-mob-${si}-due').value)">Save</button>
           </div>
         </div>` : ''}
       </div>`;
@@ -1064,11 +1068,13 @@ function showProgressEditor(name, book, currentPage, totalPages, rowId) {
   el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
-async function doUpdateProgress(name, bookTitle, newPage, totalPages) {
+async function doUpdateProgress(name, bookTitle, newPage, totalPages, newDueBack) {
   const page = parseInt(newPage) || 0;
   const idx = logs.findIndex(l => l.book === bookTitle && l.name === name && (l.status === 'reading' || l.status === 'requested'));
   if (idx >= 0) {
     logs[idx].currentPage = page;
+    logs[idx].status = 'reading'; // Auto-set to reading on progress update
+    if (newDueBack) logs[idx].dueBack = newDueBack;
   }
 
   try {
@@ -1081,7 +1087,8 @@ async function doUpdateProgress(name, bookTitle, newPage, totalPages) {
         book: bookTitle,
         currentPage: page,
         totalPages,
-        status: 'Reading'
+        status: 'Reading',
+        dueBack: newDueBack || ''
       })
     });
   } catch(e) { console.warn('Sheet write failed:', e); }
