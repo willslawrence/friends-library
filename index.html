@@ -1007,6 +1007,7 @@ async function doModalCheckout() {
 }
 
 async function doModalReturn() {
+  if (!confirm('📚 Please return the physical book to the owner.')) return;
   const name = document.getElementById('mReturnName').value.trim();
   const bookTitle = currentModalBook.title;
   const msg = document.getElementById('modalMsg');
@@ -1119,6 +1120,7 @@ async function doUpdateProgress(name, bookTitle, newPage, totalPages, newDueBack
 
 // ─── LOG RETURN ───
 async function doLogReturn(name, bookTitle) {
+  if (!confirm('📚 Please return the physical book to the owner.')) return;
   const idx = logs.findIndex(l => l.book === bookTitle && l.name === name && (l.status === 'reading' || l.status === 'requested'));
   if (idx < 0) return;
 
