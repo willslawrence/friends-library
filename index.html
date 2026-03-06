@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friends Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0F1A;
+    --card: #131825;
+    --card-hover: #1a2035;
+    --border: #1e2740;
+    --text: #e8eaf0;
+    --muted: #8892a8;
+    --accent: #6366f1;
+    --accent-glow: rgba(99,102,241,0.15);
+    --green: #22c55e;
+    --gold: #f59e0b;
+    --orange: #f97316;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --red: #ef4444;
+    --teal: #14b8a6;
+    --surface: #0f1320;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',system-ui,sans-serif; min-height:100vh; }
+
+  /* Header */
+  .header { padding:32px 24px 0; max-width:1200px; margin:0 auto; }
+  .header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:12px; }
+  .header h1 { font-size:28px; font-weight:700; display:flex; align-items:center; gap:10px; }
+  .header h1 span.emoji { font-size:32px; }
+  .header .subtitle { color:var(--muted); font-size:14px; margin-bottom:20px; line-height:1.6; }
+  .stats-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+  .stat-pill { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 20px; display:flex; align-items:center; gap:10px; }
+  .stat-pill .stat-icon { font-size:20px; }
+  .stat-pill .stat-val { font-size:22px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+  .stat-pill .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  .stat-val.gold { color:var(--gold); }
+  .stat-val.green { color:var(--green); }
+  .stat-val.blue { color:var(--blue); }
+  .stat-val.purple { color:var(--purple); }
+  .stat-val.teal { color:var(--teal); }
+  .stat-val.orange { color:var(--orange); }
+
+  /* Tabs */
+  .tabs { display:flex; gap:4px; padding:0 24px; max-width:1200px; margin:0 auto 24px; border-bottom:1px solid var(--border); }
+  .tab { padding:12px 20px; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* Content */
+  .content { padding:0 24px 48px; max-width:1200px; margin:0 auto; }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  /* Search */
+  .search-bar { margin-bottom:20px; position:relative; }
+  .search-bar input { width:100%; max-width:400px; padding:12px 16px 12px 42px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.2s; }
+  .search-bar input:focus { border-color:var(--accent); }
+  .search-bar .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:16px; pointer-events:none; }
+
+  /* Category filter toggles */
+  .cat-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+  .cat-btn { padding:7px 16px; border-radius:20px; border:2px solid var(--border); background:var(--card); font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; color:var(--muted); }
+  .cat-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .cat-btn.active { color:#fff; }
+  .cat-btn.active[data-cat="all"] { background:var(--accent); border-color:var(--accent); }
+  .cat-btn.active[data-cat="religious"] { background:#a78bfa; border-color:#a78bfa; }
+  .cat-btn.active[data-cat="thinking"] { background:#60a5fa; border-color:#60a5fa; }
+  .cat-btn.active[data-cat="fiction"] { background:#f97316; border-color:#f97316; }
+  .cat-btn.active[data-cat="reference"] { background:#14b8a6; border-color:#14b8a6; }
+
+  /* Book Grid */
+  .book-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+  .book-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; cursor:pointer; transition:all 0.3s; position:relative; overflow:hidden; }
+  .book-card:hover { background:var(--card-hover); border-color:var(--accent); transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,0.3); }
+  .book-card.dimmed { opacity:0.15; filter:grayscale(80%); transform:scale(0.98); pointer-events:none; }
+  .book-card.cat-religious { border-left:3px solid #a78bfa; }
+  .book-card.cat-thinking { border-left:3px solid #60a5fa; }
+  .book-card.cat-fiction { border-left:3px solid #f97316; }
+  .book-card.cat-reference { border-left:3px solid #14b8a6; }
+
+  .book-card-inner { display:flex; gap:16px; }
+  .book-cover { width:90px; height:130px; border-radius:8px; overflow:hidden; flex-shrink:0; background:var(--surface); display:flex; align-items:center; justify-content:center; }
+  .book-cover img { width:100%; height:100%; object-fit:cover; }
+  .book-cover .placeholder-cover { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:36px; background:linear-gradient(135deg,var(--accent),var(--purple)); color:white; font-weight:700; }
+  .book-info { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .book-title { font-size:16px; font-weight:700; margin-bottom:4px; line-height:1.3; }
+  .book-author { font-size:13px; color:var(--muted); margin-bottom:8px; }
+  .book-meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:auto; }
+  .owner-badge { background:rgba(99,102,241,0.15); color:var(--accent); font-size:11px; font-weight:600; padding:3px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px; }
+  .status-badge { font-size:11px; font-weight:600; padding:3px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px; }
+  .status-badge.available { background:rgba(34,197,94,0.15); color:var(--green); }
+  .status-badge.checked-out { background:rgba(249,115,22,0.15); color:var(--orange); }
+  .status-badge.reserved { background:rgba(168,85,247,0.15); color:var(--purple); }
+  .genre-badge { font-size:11px; color:var(--muted); padding:3px 8px; border-radius:6px; background:var(--surface); }
+  .pages-badge { font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .stars { color:var(--gold); font-size:13px; letter-spacing:1px; }
+
+  /* Checkout Log Table */
+  .log-table-wrap { overflow-x:auto; }
+  .log-table { width:100%; border-collapse:collapse; }
+  .log-table th { text-align:left; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; padding:12px 16px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .log-table td { padding:12px 16px; border-bottom:1px solid rgba(30,39,64,0.5); font-size:14px; white-space:nowrap; }
+  .log-table tr:hover td { background:var(--card-hover); }
+  .log-status { font-size:12px; font-weight:600; padding:4px 10px; border-radius:8px; display:inline-block; }
+  .log-status.reading { background:rgba(99,102,241,0.15); color:var(--accent); }
+  .log-status.reserved { background:rgba(168,85,247,0.15); color:var(--purple); }
+  .log-status.returned { background:rgba(34,197,94,0.15); color:var(--green); }
+  .log-status.overdue { background:rgba(239,68,68,0.15); color:var(--red); }
+  .progress-bar { height:6px; background:var(--surface); border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:3px; transition:width 0.3s; }
+  .progress-fill.reading { background:linear-gradient(90deg,var(--accent),var(--purple)); }
+  .progress-fill.completed { background:var(--green); }
+
+  /* Expanded Card Modal */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center; padding:24px; backdrop-filter:blur(4px); }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:16px; max-width:600px; width:100%; max-height:85vh; overflow-y:auto; padding:28px; position:relative; }
+  .modal-close { position:absolute; top:16px; right:16px; width:32px; height:32px; border-radius:8px; background:var(--surface); border:1px solid var(--border); color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; z-index:2; }
+  .modal-close:hover { color:var(--text); border-color:var(--accent); }
+  .modal-header { display:flex; gap:20px; margin-bottom:20px; }
+  .modal-cover { width:120px; height:175px; border-radius:10px; overflow:hidden; flex-shrink:0; }
+  .modal-cover img { width:100%; height:100%; object-fit:cover; }
+  .modal-cover .placeholder-cover { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:48px; background:linear-gradient(135deg,var(--accent),var(--purple)); color:white; font-weight:700; }
+  .modal-title { font-size:22px; font-weight:700; margin-bottom:4px; }
+  .modal-author { font-size:14px; color:var(--muted); margin-bottom:12px; }
+  .modal-meta-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .modal-summary { color:var(--muted); font-size:14px; line-height:1.7; margin-bottom:24px; border-top:1px solid var(--border); padding-top:20px; }
+  .modal-section { border-top:1px solid var(--border); padding-top:20px; margin-bottom:20px; }
+  .modal-section h3 { font-size:14px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .checkout-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(30,39,64,0.5); }
+  .checkout-row:last-child { border-bottom:none; }
+  .checkout-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent-glow); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; color:var(--accent); flex-shrink:0; }
+  .checkout-info { flex:1; }
+  .checkout-name { font-size:13px; font-weight:600; }
+  .checkout-detail { font-size:11px; color:var(--muted); }
+  .checkout-progress { width:80px; }
+  .progress-pct { font-size:10px; color:var(--muted); text-align:right; font-family:'JetBrains Mono',monospace; }
+
+  /* Form */
+  .form-panel { max-width:500px; }
+  .form-panel h2 { font-size:20px; font-weight:700; margin-bottom:8px; }
+  .form-panel .desc { color:var(--muted); font-size:14px; margin-bottom:24px; line-height:1.6; }
+  .form-group { margin-bottom:20px; }
+  .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  .form-group select, .form-group input { width:100%; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.2s; }
+  .form-group select:focus, .form-group input:focus { border-color:var(--accent); }
+  .form-group select { cursor:pointer; -webkit-appearance:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238892a8' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+  .form-row { display:flex; gap:12px; }
+  .form-row .form-group { flex:1; }
+  .btn-submit { background:linear-gradient(135deg,var(--accent),var(--purple)); color:white; border:none; padding:14px 28px; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif; width:100%; }
+  .btn-submit:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(99,102,241,0.3); }
+  .btn-submit:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+  .btn-return { background:linear-gradient(135deg,var(--green),var(--teal)); }
+  .btn-return:hover { box-shadow:0 8px 24px rgba(34,197,94,0.3); }
+  .form-msg { margin-top:12px; padding:12px 16px; border-radius:10px; font-size:13px; display:none; }
+  .form-msg.success { display:block; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); color:var(--green); }
+  .form-msg.error { display:block; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#ef4444; }
+
+  /* PDF grid */
+  .pdf-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+  .pdf-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; cursor:pointer; transition:all 0.3s; border-left:3px solid var(--teal); }
+  .pdf-card:hover { background:var(--card-hover); border-color:var(--accent); transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,0.3); }
+  .pdf-card .book-card-inner { display:flex; gap:16px; }
+  .pdf-icon { width:90px; height:130px; border-radius:8px; background:linear-gradient(135deg,var(--teal),var(--blue)); display:flex; align-items:center; justify-content:center; font-size:40px; flex-shrink:0; }
+
+  /* Empty state */
+  .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty-state .empty-icon { font-size:48px; margin-bottom:16px; }
+  .empty-state .empty-text { font-size:16px; margin-bottom:8px; }
+  .empty-state .empty-sub { font-size:13px; }
+
+  /* Loading */
+  .loading { text-align:center; padding:60px 20px; color:var(--muted); }
+  .loading .spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 12px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Responsive */
+  @media(max-width:600px) {
+    .header h1 { font-size:22px; }
+    .stats-row { gap:8px; }
+    .stat-pill { padding:10px 14px; }
+    .stat-pill .stat-val { font-size:18px; }
+    .book-grid, .pdf-grid { grid-template-columns:1fr; }
+    .modal { padding:20px; }
+    .modal-header { flex-direction:column; align-items:center; text-align:center; }
+    .tabs { overflow-x:auto; }
+    .form-row { flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1><span class="emoji">📖</span> Friends Library</h1>
+  </div>
+  <p class="subtitle">A shared library for our community. Browse books, check them out, and share the knowledge. Add books to the Google Sheet and they'll appear here automatically.</p>
+  <div class="stats-row" id="statsRow">
+    <div class="stat-pill"><span class="stat-icon">📚</span><div><div class="stat-val blue" id="statBooks">—</div><div class="stat-label">Books</div></div></div>
+    <div class="stat-pill"><span class="stat-icon">📄</span><div><div class="stat-val teal" id="statPdfs">—</div><div class="stat-label">PDFs</div></div></div>
+    <div class="stat-pill"><span class="stat-icon">👥</span><div><div class="stat-val purple" id="statMembers">—</div><div class="stat-label">Members</div></div></div>
+    <div class="stat-pill"><span class="stat-icon">📤</span><div><div class="stat-val orange" id="statCheckedOut">—</div><div class="stat-label">Checked Out</div></div></div>
+    <div class="stat-pill"><span class="stat-icon">✅</span><div><div class="stat-val green" id="statAvailable">—</div><div class="stat-label">Available</div></div></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="books">📚 Books</div>
+  <div class="tab" data-tab="pdfs">📄 PDFs</div>
+  <div class="tab" data-tab="logs">📋 Check Out Log</div>
+  <div class="tab" data-tab="checkout">🔄 Check Out / Return</div>
+</div>
+
+<div class="content">
+  <!-- Books Tab -->
+  <div class="tab-panel active" id="panel-books">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="bookSearch" placeholder="Search books by title, author, or genre…" oninput="applyFilters()">
+    </div>
+    <div class="cat-filters" id="catFilters"></div>
+    <div class="loading" id="booksLoading"><div class="spinner"></div>Loading library…</div>
+    <div class="book-grid" id="bookGrid"></div>
+    <div class="empty-state" id="booksEmpty" style="display:none;">
+      <div class="empty-icon">📚</div>
+      <div class="empty-text">No books yet</div>
+      <div class="empty-sub">Add books to the Google Sheet and they'll show up here.</div>
+    </div>
+  </div>
+
+  <!-- PDFs Tab -->
+  <div class="tab-panel" id="panel-pdfs">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="pdfSearch" placeholder="Search PDFs…" oninput="filterPdfs()">
+    </div>
+    <div class="loading" id="pdfsLoading"><div class="spinner"></div>Loading PDFs…</div>
+    <div class="pdf-grid" id="pdfGrid"></div>
+    <div class="empty-state" id="pdfsEmpty" style="display:none;">
+      <div class="empty-icon">📄</div>
+      <div class="empty-text">No PDFs yet</div>
+      <div class="empty-sub">Add PDFs to the "PDFS" tab in the Google Sheet.</div>
+    </div>
+  </div>
+
+  <!-- Checkout Log Tab -->
+  <div class="tab-panel" id="panel-logs">
+    <div class="log-table-wrap">
+      <table class="log-table" id="logTable">
+        <thead>
+          <tr>
+            <th>Reader</th>
+            <th>Book</th>
+            <th>Started</th>
+            <th>Progress</th>
+            <th>Status</th>
+            <th>Due Back</th>
+          </tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="logsEmpty" style="display:none;">
+      <div class="empty-icon">📋</div>
+      <div class="empty-text">No checkouts yet</div>
+      <div class="empty-sub">Use the "Check Out / Return" tab to borrow a book.</div>
+    </div>
+  </div>
+
+  <!-- Checkout / Return Tab -->
+  <div class="tab-panel" id="panel-checkout">
+    <div style="display:flex;gap:32px;flex-wrap:wrap;">
+      <!-- Check Out Form -->
+      <div class="form-panel" style="flex:1;min-width:280px;">
+        <h2>📤 Check Out a Book</h2>
+        <p class="desc">Borrow a book from the library. Pick your name, choose a book, and set a return date.</p>
+        <div class="form-group">
+          <label>Your Name</label>
+          <select id="checkoutName"><option value="">Select your name…</option></select>
+          <div style="margin-top:8px;">
+            <span style="font-size:12px;color:var(--muted);">New member?</span>
+            <input type="text" id="newMemberName" placeholder="Type your name…" style="display:none;margin-top:6px;">
+            <button onclick="toggleNewMember()" id="newMemberBtn" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;">+ Add yourself</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Book</label>
+          <select id="checkoutBook"><option value="">Select a book…</option></select>
+        </div>
+        <div class="form-group">
+          <label>Due Back Date</label>
+          <input type="date" id="checkoutDue">
+        </div>
+        <button class="btn-submit" id="checkoutBtn" disabled onclick="doCheckout()">Check Out Book</button>
+        <div class="form-msg" id="checkoutMsg"></div>
+      </div>
+
+      <!-- Return / Update Form -->
+      <div class="form-panel" style="flex:1;min-width:280px;">
+        <h2>📥 Return or Update</h2>
+        <p class="desc">Return a book or update your reading progress.</p>
+        <div class="form-group">
+          <label>Your Name</label>
+          <select id="returnName"><option value="">Select your name…</option></select>
+        </div>
+        <div class="form-group">
+          <label>Book</label>
+          <select id="returnBook"><option value="">Select a checked-out book…</option></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Current Page</label>
+            <input type="number" id="returnPage" placeholder="e.g. 142" min="0">
+          </div>
+          <div class="form-group">
+            <label>Total Pages</label>
+            <input type="number" id="returnTotal" disabled>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label>Progress</label>
+          <div class="progress-bar" style="height:10px;border-radius:5px;">
+            <div class="progress-fill reading" id="returnProgress" style="width:0%;border-radius:5px;"></div>
+          </div>
+          <div style="text-align:right;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;" id="returnPct">0%</div>
+        </div>
+        <button class="btn-submit btn-return" id="returnBtn" disabled onclick="doReturn()">Return / Update</button>
+        <div class="form-msg" id="returnMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Book Detail Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-header">
+      <div class="modal-cover" id="modalCover"></div>
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-author" id="modalAuthor"></div>
+        <div class="modal-meta-row" id="modalMeta"></div>
+        <div style="margin-top:4px;" id="modalStars"></div>
+      </div>
+    </div>
+    <div class="modal-summary" id="modalSummary"></div>
+    <div class="modal-section" id="modalCheckouts">
+      <h3>📋 Checkout History</h3>
+      <div id="modalCheckoutList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───
+const SHEET_ID = '1tarzoeTPmF7At2B5a0yJJ9NzcrjtnTuXUgr-71xVHfk';
+const BOOKS_GID = '0';
+const PDFS_GID = '1691776306';
+const LOGS_GID = '1496095557';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwz5P7KaUvmOFAo0o1iSBB5ExsghHDqo_5dYBcfRSq_ZnpveqWcsaTp5pwvl6K3w6P9/exec';
+const CSV_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=`;
+
+// ─── STATE ───
+let books = [];
+let pdfs = [];
+let logs = [];
+let activeCat = 'all';
+
+// ─── CSV PARSER ───
+function parseCSV(text) {
+  const rows = [];
+  let i = 0;
+  while (i < text.length) {
+    const row = [];
+    while (i < text.length) {
+      let val = '';
+      if (text[i] === '"') {
+        i++;
+        while (i < text.length) {
+          if (text[i] === '"') {
+            if (text[i+1] === '"') { val += '"'; i += 2; }
+            else { i++; break; }
+          } else { val += text[i]; i++; }
+        }
+      } else {
+        while (i < text.length && text[i] !== ',' && text[i] !== '\n' && text[i] !== '\r') {
+          val += text[i]; i++;
+        }
+      }
+      row.push(val.trim());
+      if (i < text.length && text[i] === ',') { i++; }
+      else break;
+    }
+    if (text[i] === '\r') i++;
+    if (text[i] === '\n') i++;
+    if (row.length > 0 && row.some(c => c)) rows.push(row);
+  }
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.toLowerCase().replace(/[^a-z0-9]/g,'_'));
+  return rows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((h,idx) => obj[h] = r[idx] || '');
+    return obj;
+  });
+}
+
+// ─── DATA LOADING ───
+async function fetchCSV(gid) {
+  const url = CSV_BASE + gid;
+  try {
+    const r = await fetch(url);
+    if (r.ok) return r.text();
+  } catch(e) {}
+  const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
+  const r2 = await fetch(proxy);
+  if (!r2.ok) throw new Error('CSV fetch failed');
+  return r2.text();
+}
+
+async function loadData() {
+  try {
+    const [booksCSV, pdfsCSV, logsCSV] = await Promise.all([
+      fetchCSV(BOOKS_GID),
+      fetchCSV(PDFS_GID),
+      fetchCSV(LOGS_GID)
+    ]);
+
+    books = parseCSV(booksCSV).filter(b => b.title).map(b => ({
+      title: b.title || '',
+      author: b.author || '',
+      cover: b.cover_url || '',
+      summary: b.summary || '',
+      rating: parseFloat(b.goodreads_rating) || 0,
+      genre: b.genre || '',
+      totalPages: parseInt(b.total_pages) || 0,
+      category: (b.category || '').trim(),
+      owner: b.book_owner || ''
+    }));
+
+    pdfs = parseCSV(pdfsCSV).filter(p => p.title).map(p => ({
+      title: p.title || '',
+      author: p.author || '',
+      cover: p.cover_url || '',
+      summary: p.summary || '',
+      rating: parseFloat(p.goodreads_rating) || 0,
+      genre: p.genre || '',
+      totalPages: parseInt(p.total_pages) || 0,
+      category: (p.category || '').trim()
+    }));
+
+    logs = parseCSV(logsCSV).filter(l => l.reader_name || l.book_title).map(l => ({
+      name: l.reader_name || '',
+      book: l.book_title || '',
+      startDate: l.start_date || '',
+      currentPage: parseInt(l.current_page) || 0,
+      totalPages: parseInt(l.total_pages) || 0,
+      status: (l.status || 'Reading').toLowerCase(),
+      dueBack: l.due_back_date || ''
+    }));
+
+  } catch(e) {
+    console.error('Load error:', e);
+  }
+  render();
+}
+
+// ─── HELPERS ───
+function getBookStatus(title) {
+  const active = logs.filter(l => l.book === title && (l.status === 'reading' || l.status === 'reserved'));
+  if (active.length > 0) return active[0].status;
+  return 'available';
+}
+
+function getBookCheckouts(title) {
+  return logs.filter(l => l.book === title);
+}
+
+function isOverdue(log) {
+  if (!log.dueBack || log.status === 'returned') return false;
+  try {
+    return new Date(log.dueBack) < new Date() && (log.status === 'reading');
+  } catch { return false; }
+}
+
+function renderStars(rating) {
+  if (!rating) return '';
+  const full = Math.floor(rating);
+  const half = rating % 1 >= 0.3;
+  let s = '';
+  for (let i = 0; i < full; i++) s += '★';
+  if (half) s += '☆';
+  return `<span class="stars">${s}</span> <span style="color:var(--muted);font-size:12px;">${rating.toFixed(1)}</span>`;
+}
+
+function coverHTML(book) {
+  if (book.cover) {
+    return `<img src="${book.cover}" alt="${book.title}" onerror="this.parentElement.innerHTML='<div class=placeholder-cover>${book.title[0]}</div>'">`;
+  }
+  return `<div class="placeholder-cover">${book.title[0] || '?'}</div>`;
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  try {
+    const date = new Date(d);
+    if (isNaN(date)) return d;
+    return date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  } catch { return d; }
+}
+
+// ─── RENDER ───
+function render() {
+  renderStats();
+  renderCategoryFilters();
+  renderBooks();
+  renderPdfs();
+  renderLogs();
+  renderForms();
+  document.getElementById('booksLoading').style.display = 'none';
+  document.getElementById('pdfsLoading').style.display = 'none';
+}
+
+function renderStats() {
+  const activeCheckouts = logs.filter(l => l.status === 'reading' || l.status === 'reserved');
+  const members = [...new Set(logs.map(l => l.name).concat(books.map(b => b.owner)).filter(Boolean))];
+  const availableCount = books.filter(b => getBookStatus(b.title) === 'available').length;
+
+  document.getElementById('statBooks').textContent = books.length;
+  document.getElementById('statPdfs').textContent = pdfs.length;
+  document.getElementById('statMembers').textContent = members.length;
+  document.getElementById('statCheckedOut').textContent = activeCheckouts.length;
+  document.getElementById('statAvailable').textContent = availableCount;
+}
+
+function renderCategoryFilters() {
+  const cats = [...new Set(books.map(b => b.category).filter(Boolean))];
+  const container = document.getElementById('catFilters');
+  if (cats.length <= 1) { container.style.display = 'none'; return; }
+  const colorMap = { religious:'#a78bfa', thinking:'#60a5fa', fiction:'#f97316', reference:'#14b8a6' };
+  container.innerHTML = `<button class="cat-btn active" data-cat="all" onclick="filterCat('all')">All</button>` +
+    cats.map(c => {
+      const key = c.toLowerCase();
+      return `<button class="cat-btn" data-cat="${key}" onclick="filterCat('${key}')">${c}</button>`;
+    }).join('');
+}
+
+function renderBooks() {
+  const grid = document.getElementById('bookGrid');
+  if (books.length === 0) {
+    grid.style.display = 'none';
+    document.getElementById('booksEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('booksEmpty').style.display = 'none';
+  grid.style.display = '';
+
+  grid.innerHTML = books.map((b, i) => {
+    const status = getBookStatus(b.title);
+    const catClass = b.category ? 'cat-' + b.category.toLowerCase() : '';
+    const statusClass = status === 'available' ? 'available' : status === 'reserved' ? 'reserved' : 'checked-out';
+    const statusLabel = status === 'available' ? '✅ Available' : status === 'reserved' ? '🔖 Reserved' : '📤 Checked Out';
+    const checkouts = getBookCheckouts(b.title);
+    const activeReader = checkouts.find(l => l.status === 'reading');
+
+    return `
+      <div class="book-card ${catClass}" data-index="${i}" data-category="${(b.category||'').toLowerCase()}" onclick="openModal(${i},'book')">
+        <div class="book-card-inner">
+          <div class="book-cover">${coverHTML(b)}</div>
+          <div class="book-info">
+            <div class="book-title">${b.title}</div>
+            <div class="book-author">by ${b.author}</div>
+            ${b.rating ? '<div style="margin-bottom:6px;">'+renderStars(b.rating)+'</div>' : ''}
+            <div class="book-meta">
+              <span class="status-badge ${statusClass}">${statusLabel}</span>
+              ${b.owner ? `<span class="owner-badge">👤 ${b.owner}</span>` : ''}
+              ${activeReader ? `<span style="font-size:11px;color:var(--muted);">📖 ${activeReader.name}</span>` : ''}
+            </div>
+            <div class="book-meta" style="margin-top:6px;">
+              ${b.genre ? `<span class="genre-badge">${b.genre}</span>` : ''}
+              ${b.totalPages ? `<span class="pages-badge">${b.totalPages}p</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderPdfs() {
+  const grid = document.getElementById('pdfGrid');
+  if (pdfs.length === 0) {
+    grid.style.display = 'none';
+    document.getElementById('pdfsEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('pdfsEmpty').style.display = 'none';
+  grid.style.display = '';
+
+  grid.innerHTML = pdfs.map((p, i) => {
+    return `
+      <div class="pdf-card" onclick="openModal(${i},'pdf')">
+        <div class="book-card-inner">
+          <div class="pdf-icon">📄</div>
+          <div class="book-info">
+            <div class="book-title">${p.title}</div>
+            <div class="book-author">by ${p.author}</div>
+            ${p.rating ? '<div style="margin-bottom:6px;">'+renderStars(p.rating)+'</div>' : ''}
+            <div class="book-meta">
+              ${p.genre ? `<span class="genre-badge">${p.genre}</span>` : ''}
+              ${p.totalPages ? `<span class="pages-badge">${p.totalPages}p</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderLogs() {
+  const body = document.getElementById('logBody');
+  if (logs.length === 0) {
+    document.getElementById('logTable').style.display = 'none';
+    document.getElementById('logsEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('logsEmpty').style.display = 'none';
+  document.getElementById('logTable').style.display = '';
+
+  // Sort: active first, then by date
+  const sorted = [...logs].sort((a,b) => {
+    const statusOrder = { reading:0, reserved:1, returned:2 };
+    const sa = statusOrder[a.status] ?? 1;
+    const sb = statusOrder[b.status] ?? 1;
+    if (sa !== sb) return sa - sb;
+    return 0;
+  });
+
+  body.innerHTML = sorted.map(l => {
+    const pct = l.totalPages ? Math.round((l.currentPage / l.totalPages) * 100) : 0;
+    const overdue = isOverdue(l);
+    const statusClass = overdue ? 'overdue' : l.status;
+    const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'reserved' ? '🔖 Reserved' : '✅ Returned';
+    return `
+      <tr>
+        <td><strong>${l.name}</strong></td>
+        <td>${l.book}</td>
+        <td>${formatDate(l.startDate)}</td>
+        <td style="min-width:120px;">
+          ${l.status !== 'reserved' ? `
+            <div class="progress-bar" style="width:100px;display:inline-block;vertical-align:middle;">
+              <div class="progress-fill ${pct>=100?'completed':'reading'}" style="width:${Math.min(pct,100)}%"></div>
+            </div>
+            <span style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-left:6px;">${Math.min(pct,100)}%</span>
+          ` : '<span style="font-size:12px;color:var(--muted);">—</span>'}
+        </td>
+        <td><span class="log-status ${statusClass}">${statusText}</span></td>
+        <td style="color:${overdue ? 'var(--red)' : 'var(--muted)'};font-size:13px;">${formatDate(l.dueBack)}</td>
+      </tr>`;
+  }).join('');
+}
+
+// ─── FILTERS ───
+function filterCat(cat) {
+  activeCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.cat === cat);
+  });
+  applyFilters();
+}
+
+function applyFilters() {
+  const query = (document.getElementById('bookSearch').value || '').toLowerCase();
+  const cards = document.querySelectorAll('#bookGrid .book-card');
+  cards.forEach(card => {
+    const idx = parseInt(card.dataset.index);
+    const b = books[idx];
+    const catMatch = activeCat === 'all' || (b.category||'').toLowerCase() === activeCat;
+    const searchMatch = !query ||
+      b.title.toLowerCase().includes(query) ||
+      b.author.toLowerCase().includes(query) ||
+      b.genre.toLowerCase().includes(query) ||
+      (b.owner||'').toLowerCase().includes(query);
+    card.classList.toggle('dimmed', !(catMatch && searchMatch));
+  });
+}
+
+function filterPdfs() {
+  const query = (document.getElementById('pdfSearch').value || '').toLowerCase();
+  const cards = document.querySelectorAll('#pdfGrid .pdf-card');
+  cards.forEach((card, i) => {
+    const p = pdfs[i];
+    const match = !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.author.toLowerCase().includes(query) ||
+      p.genre.toLowerCase().includes(query);
+    card.style.display = match ? '' : 'none';
+  });
+}
+
+// ─── MODAL ───
+function openModal(idx, type) {
+  const item = type === 'pdf' ? pdfs[idx] : books[idx];
+  const checkouts = type === 'pdf' ? [] : getBookCheckouts(item.title);
+
+  document.getElementById('modalCover').innerHTML = type === 'pdf'
+    ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;background:linear-gradient(135deg,var(--teal),var(--blue));border-radius:10px;">📄</div>'
+    : coverHTML(item);
+  document.getElementById('modalTitle').textContent = item.title;
+  document.getElementById('modalAuthor').textContent = 'by ' + item.author;
+  document.getElementById('modalStars').innerHTML = renderStars(item.rating);
+
+  const status = type === 'pdf' ? null : getBookStatus(item.title);
+  let metaHTML = '';
+  if (type !== 'pdf' && status) {
+    const sc = status === 'available' ? 'available' : status === 'reserved' ? 'reserved' : 'checked-out';
+    const sl = status === 'available' ? '✅ Available' : status === 'reserved' ? '🔖 Reserved' : '📤 Checked Out';
+    metaHTML += `<span class="status-badge ${sc}">${sl}</span>`;
+  }
+  if (item.owner) metaHTML += `<span class="owner-badge">👤 ${item.owner}</span>`;
+  if (item.genre) metaHTML += `<span class="genre-badge">${item.genre}</span>`;
+  if (item.totalPages) metaHTML += `<span class="pages-badge">${item.totalPages} pages</span>`;
+  document.getElementById('modalMeta').innerHTML = metaHTML;
+
+  document.getElementById('modalSummary').textContent = item.summary || 'No summary available.';
+
+  const section = document.getElementById('modalCheckouts');
+  const list = document.getElementById('modalCheckoutList');
+  if (type === 'pdf' || checkouts.length === 0) {
+    if (type === 'pdf') {
+      section.style.display = 'none';
+    } else {
+      section.style.display = '';
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0;">No one has checked out this book yet.</div>';
+    }
+  } else {
+    section.style.display = '';
+    list.innerHTML = checkouts.map(l => {
+      const pct = l.totalPages ? Math.round((l.currentPage / l.totalPages) * 100) : 0;
+      const overdue = isOverdue(l);
+      const statusText = overdue ? '⚠️ Overdue' : l.status === 'reading' ? '📖 Reading' : l.status === 'reserved' ? '🔖 Reserved' : '✅ Returned';
+      return `
+        <div class="checkout-row">
+          <div class="checkout-avatar">${l.name[0]}</div>
+          <div class="checkout-info">
+            <div class="checkout-name">${l.name}</div>
+            <div class="checkout-detail">${statusText} · Started ${formatDate(l.startDate)}${l.dueBack ? ' · Due '+formatDate(l.dueBack) : ''}</div>
+          </div>
+          ${l.status !== 'reserved' ? `
+          <div class="checkout-progress">
+            <div class="progress-bar"><div class="progress-fill ${pct>=100?'completed':'reading'}" style="width:${Math.min(pct,100)}%"></div></div>
+            <div class="progress-pct">${Math.min(pct,100)}%</div>
+          </div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+document.getElementById('modalClose').onclick = () => document.getElementById('modalOverlay').classList.remove('open');
+document.getElementById('modalOverlay').onclick = (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); };
+
+// ─── FORMS ───
+function renderForms() {
+  const members = [...new Set(logs.map(l => l.name).concat(books.map(b => b.owner)).filter(Boolean))].sort();
+
+  // Checkout form
+  const checkoutName = document.getElementById('checkoutName');
+  checkoutName.innerHTML = '<option value="">Select your name…</option>' +
+    members.map(m => `<option value="${m}">${m}</option>`).join('');
+
+  const availableBooks = books.filter(b => getBookStatus(b.title) === 'available');
+  const checkoutBook = document.getElementById('checkoutBook');
+  checkoutBook.innerHTML = '<option value="">Select a book…</option>' +
+    availableBooks.map(b => `<option value="${b.title}">${b.title}${b.owner ? ' ('+b.owner+"'s)" : ''}</option>`).join('');
+
+  // Default due date = 30 days from now
+  const due = new Date();
+  due.setDate(due.getDate() + 30);
+  document.getElementById('checkoutDue').value = due.toISOString().slice(0,10);
+
+  // Return form
+  const returnName = document.getElementById('returnName');
+  const activeMembers = [...new Set(logs.filter(l => l.status === 'reading' || l.status === 'reserved').map(l => l.name))].sort();
+  returnName.innerHTML = '<option value="">Select your name…</option>' +
+    activeMembers.map(m => `<option value="${m}">${m}</option>`).join('');
+}
+
+document.getElementById('checkoutName').onchange = validateCheckout;
+document.getElementById('checkoutBook').onchange = validateCheckout;
+document.getElementById('newMemberName').oninput = validateCheckout;
+
+function getCheckoutName() {
+  const input = document.getElementById('newMemberName');
+  if (input.style.display !== 'none' && input.value.trim()) return input.value.trim();
+  return document.getElementById('checkoutName').value;
+}
+
+function toggleNewMember() {
+  const input = document.getElementById('newMemberName');
+  const btn = document.getElementById('newMemberBtn');
+  const select = document.getElementById('checkoutName');
+  if (input.style.display === 'none') {
+    input.style.display = 'block';
+    btn.textContent = '← Use existing name';
+    select.style.display = 'none';
+    input.focus();
+  } else {
+    input.style.display = 'none';
+    btn.textContent = '+ Add yourself';
+    select.style.display = 'block';
+    input.value = '';
+  }
+  validateCheckout();
+}
+
+function validateCheckout() {
+  const name = getCheckoutName();
+  const book = document.getElementById('checkoutBook').value;
+  document.getElementById('checkoutBtn').disabled = !(name && book);
+}
+
+document.getElementById('returnName').onchange = updateReturnBooks;
+
+function updateReturnBooks() {
+  const name = document.getElementById('returnName').value;
+  const myBooks = logs.filter(l => l.name === name && (l.status === 'reading' || l.status === 'reserved'));
+  const returnBook = document.getElementById('returnBook');
+  returnBook.innerHTML = '<option value="">Select a checked-out book…</option>' +
+    myBooks.map(l => `<option value="${l.book}">${l.book}</option>`).join('');
+  document.getElementById('returnBtn').disabled = true;
+}
+
+document.getElementById('returnBook').onchange = function() {
+  const name = document.getElementById('returnName').value;
+  const bookTitle = this.value;
+  const log = logs.find(l => l.name === name && l.book === bookTitle);
+  if (log) {
+    document.getElementById('returnPage').value = log.currentPage || '';
+    document.getElementById('returnTotal').value = log.totalPages || '';
+    updateReturnProgress();
+  }
+  document.getElementById('returnBtn').disabled = !(name && bookTitle);
+};
+
+document.getElementById('returnPage').oninput = updateReturnProgress;
+
+function updateReturnProgress() {
+  const cur = parseInt(document.getElementById('returnPage').value) || 0;
+  const tot = parseInt(document.getElementById('returnTotal').value) || 1;
+  const pct = Math.min(Math.round((cur / tot) * 100), 100);
+  document.getElementById('returnProgress').style.width = pct + '%';
+  document.getElementById('returnPct').textContent = pct + '%';
+  const fill = document.getElementById('returnProgress');
+  if (pct >= 100) { fill.classList.remove('reading'); fill.classList.add('completed'); }
+  else { fill.classList.add('reading'); fill.classList.remove('completed'); }
+}
+
+// ─── ACTIONS ───
+async function doCheckout() {
+  const name = getCheckoutName();
+  const bookTitle = document.getElementById('checkoutBook').value;
+  const dueBack = document.getElementById('checkoutDue').value;
+  const book = books.find(b => b.title === bookTitle);
+  const msg = document.getElementById('checkoutMsg');
+  const btn = document.getElementById('checkoutBtn');
+
+  if (!name || !bookTitle) return;
+  btn.disabled = true;
+  btn.textContent = 'Checking out…';
+
+  const newLog = {
+    name,
+    book: bookTitle,
+    startDate: new Date().toISOString().slice(0,10),
+    currentPage: 0,
+    totalPages: book ? book.totalPages : 0,
+    status: 'reading',
+    dueBack
+  };
+  logs.push(newLog);
+
+  // Write to sheet
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'checkout',
+        name,
+        book: bookTitle,
+        startDate: newLog.startDate,
+        currentPage: 0,
+        totalPages: newLog.totalPages,
+        status: 'Reading',
+        dueBack
+      })
+    });
+  } catch(e) { console.warn('Sheet write failed:', e); }
+
+  render();
+  msg.className = 'form-msg success';
+  msg.textContent = `📚 "${bookTitle}" checked out to ${name}! Due back ${formatDate(dueBack)}.`;
+  msg.style.display = 'block';
+  btn.disabled = false;
+  btn.textContent = 'Check Out Book';
+  setTimeout(() => { msg.style.display = 'none'; }, 5000);
+}
+
+async function doReturn() {
+  const name = document.getElementById('returnName').value;
+  const bookTitle = document.getElementById('returnBook').value;
+  const currentPage = parseInt(document.getElementById('returnPage').value) || 0;
+  const totalPages = parseInt(document.getElementById('returnTotal').value) || 0;
+  const msg = document.getElementById('returnMsg');
+  const btn = document.getElementById('returnBtn');
+
+  if (!name || !bookTitle) return;
+  btn.disabled = true;
+  btn.textContent = 'Updating…';
+
+  const isComplete = currentPage >= totalPages && totalPages > 0;
+  const status = isComplete ? 'returned' : 'reading';
+
+  const idx = logs.findIndex(l => l.name === name && l.book === bookTitle && (l.status === 'reading' || l.status === 'reserved'));
+  if (idx >= 0) {
+    logs[idx].currentPage = currentPage;
+    logs[idx].status = status;
+  }
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'updateProgress',
+        name,
+        book: bookTitle,
+        currentPage,
+        totalPages,
+        status: status.charAt(0).toUpperCase() + status.slice(1)
+      })
+    });
+  } catch(e) { console.warn('Sheet write failed:', e); }
+
+  render();
+  msg.className = 'form-msg success';
+  msg.textContent = isComplete
+    ? `✅ "${bookTitle}" returned! Thanks, ${name}!`
+    : `📖 Progress updated — page ${currentPage} of ${totalPages}`;
+  msg.style.display = 'block';
+  btn.disabled = false;
+  btn.textContent = 'Return / Update';
+  setTimeout(() => { msg.style.display = 'none'; }, 5000);
+}
+
+// ─── TABS ───
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  };
+});
+
+// ─── INIT ───
+loadData();
+</script>
+</body>
+</html>
