@@ -90,7 +90,6 @@
   .cat-btn.active[data-filter="cat:kids 10yrs"] { background:rgba(217,119,6,0.12); border-color:#d97706; color:#b45309; }
   .cat-btn.active[data-filter^="genre:"] { background:linear-gradient(135deg,rgba(212,168,75,0.12),rgba(184,134,11,0.06)); border-color:var(--accent-light); color:var(--accent); }
   .cat-btn.active[data-filter^="owner:"] { background:linear-gradient(135deg,rgba(212,168,75,0.12),rgba(184,134,11,0.06)); border-color:var(--accent-light); color:var(--accent); }
-  .cat-btn.active[data-filter="fav"] { background:linear-gradient(135deg,rgba(212,168,75,0.18),rgba(184,134,11,0.10)); border-color:var(--accent); color:var(--accent); }
 
   /* Book Grid */
   .book-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
@@ -99,12 +98,12 @@
   .book-card:hover::after { content:''; position:absolute; inset:-1px; border-radius:17px; padding:1.5px; background:var(--gold-border); -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none; opacity:0.7; }
   .book-card:active { transform:scale(0.98); }
   .book-card.dimmed { opacity:0.3; filter:grayscale(50%); }
-  .book-card.cat-religious,
-  .book-card.cat-thinking,
-  .book-card.cat-fiction,
-  .book-card.cat-reference,
-  .book-card.cat-kids_10yrs,
-  .book-card.cat-digital_pdf { border-left:5px solid var(--accent); background-image:linear-gradient(to right, rgba(212,168,75,0.04), transparent 40%); }
+  .book-card.cat-religious { border-left:4px solid #1a1a1a; }
+  .book-card.cat-thinking { border-left:4px solid #1a1a1a; }
+  .book-card.cat-fiction { border-left:4px solid #1a1a1a; }
+  .book-card.cat-reference { border-left:4px solid #1a1a1a; }
+  .book-card.cat-kids_10yrs { border-left:4px solid #1a1a1a; }
+  .book-card.cat-digital_pdf { border-left:4px solid #1a1a1a; }
 
   .fav-badge { position:absolute; top:10px; right:10px; background:var(--gold-grad); color:white; font-size:9px; font-weight:700; padding:3px 8px; border-radius:8px; display:flex; align-items:center; gap:2px; z-index:1; box-shadow:0 2px 8px rgba(184,134,11,0.3); text-shadow:0 1px 2px rgba(0,0,0,0.2); }
   .book-card-inner { display:flex; gap:12px; }
@@ -150,7 +149,7 @@
   .log-card-buttons { display:flex; gap:6px; margin-top:10px; }
   .log-card-buttons button { flex:1; border:none; padding:10px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
   .log-btn-progress { background:var(--gold-grad); color:white; text-shadow:0 1px 2px rgba(0,0,0,0.15); }
-  .log-btn-return { background:var(--green); color:white; }
+  .log-btn-return { background:linear-gradient(135deg,#2a2a2a,#1a1a1a,#0d0d0d); color:white; }
 
   /* Progress inline editor */
   .progress-edit { display:flex; align-items:center; gap:6px; margin-top:8px; padding:10px; background:var(--surface); border-radius:10px; border:1px solid var(--border); }
@@ -202,8 +201,8 @@
   .btn-submit { background:var(--gold-grad); color:white; border:none; padding:14px 28px; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.3s; font-family:'DM Sans',sans-serif; width:100%; text-shadow:0 1px 2px rgba(0,0,0,0.15); box-shadow:0 4px 15px rgba(184,134,11,0.25); }
   .btn-submit:hover { transform:translateY(-1px); box-shadow:0 8px 25px rgba(184,134,11,0.35); }
   .btn-submit:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
-  .btn-return { background:linear-gradient(135deg,var(--green),var(--teal)); box-shadow:0 4px 15px rgba(61,139,79,0.25); }
-  .btn-return:hover { box-shadow:0 8px 25px rgba(61,139,79,0.3); }
+  .btn-return { background:linear-gradient(135deg,#2a2a2a,#1a1a1a,#0d0d0d); box-shadow:0 4px 15px rgba(0,0,0,0.3); }
+  .btn-return:hover { box-shadow:0 8px 25px rgba(0,0,0,0.4); }
   .form-msg { margin-top:12px; padding:12px 16px; border-radius:12px; font-size:13px; display:none; }
   .form-msg.success { display:block; background:rgba(61,139,79,0.08); border:1px solid rgba(61,139,79,0.15); color:var(--green); }
   .form-msg.error { display:block; background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.15); color:var(--red); }
@@ -215,8 +214,8 @@
   .modal-action-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
   .modal-action-btn.checkout { background:var(--gold-grad); box-shadow:0 4px 15px rgba(184,134,11,0.25); }
   .modal-action-btn.checkout:hover { box-shadow:0 8px 25px rgba(184,134,11,0.35); }
-  .modal-action-btn.return { background:linear-gradient(135deg,var(--green),var(--teal)); box-shadow:0 4px 15px rgba(61,139,79,0.25); }
-  .modal-action-btn.return:hover { box-shadow:0 8px 25px rgba(61,139,79,0.3); }
+  .modal-action-btn.return { background:linear-gradient(135deg,#2a2a2a,#1a1a1a,#0d0d0d); box-shadow:0 4px 15px rgba(0,0,0,0.3); }
+  .modal-action-btn.return:hover { box-shadow:0 8px 25px rgba(0,0,0,0.4); }
   .modal-action-btn.request { background:linear-gradient(135deg,var(--purple),#b794f4); box-shadow:0 4px 15px rgba(122,95,173,0.25); }
   .modal-action-btn.request:hover { box-shadow:0 8px 25px rgba(122,95,173,0.3); }
   .modal-inline-form { margin-top:12px; padding:16px; background:var(--surface); border-radius:14px; border:1px solid var(--border); }
@@ -569,12 +568,6 @@ function renderCategoryFilters() {
   genres.forEach(g => { html += `<button class="cat-btn" data-filter="genre:${g.toLowerCase()}" onclick="setFilter('genre:${g.toLowerCase()}')" style="border-style:dashed;">${g}</button>`; });
   owners.forEach(o => { html += `<button class="cat-btn" data-filter="owner:${o.toLowerCase()}" onclick="setFilter('owner:${o.toLowerCase()}')" style="border-radius:8px;">👤 ${o}</button>`; });
 
-  // Owner Favs toggle
-  const hasFavs = books.some(b => b.ownerFav);
-  if (hasFavs) {
-    html += `<button class="cat-btn" data-filter="fav" onclick="setFilter('fav')" style="border-radius:8px;">⭐ Owner Favs</button>`;
-  }
-
   container.innerHTML = html;
 }
 
@@ -672,7 +665,7 @@ function renderLogs() {
         <td style="white-space:nowrap;">
           ${isActive ? `
             <button onclick="event.stopPropagation();showProgressEditor('${esc(l.name)}','${esc(l.book)}',${l.currentPage},${l.totalPages},'pg-desk-${si}')" style="background:var(--accent);color:white;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-right:4px;">📝</button>
-            <button onclick="event.stopPropagation();doLogReturn('${esc(l.name)}','${esc(l.book)}')" style="background:var(--green);color:white;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">📥 Return</button>
+            <button onclick="event.stopPropagation();doLogReturn('${esc(l.name)}','${esc(l.book)}')" style="background:linear-gradient(135deg,#2a2a2a,#1a1a1a,#0d0d0d);color:white;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">📥 Return</button>
           ` : ''}
         </td>
       </tr>
@@ -767,7 +760,6 @@ function bookMatchesFilter(b) {
     if (type === 'cat' && (b.category||'').toLowerCase() === val) return true;
     if (type === 'genre' && (b.genre||'').toLowerCase() === val) return true;
     if (type === 'owner' && (b.owner||'').toLowerCase() === val) return true;
-    if (filter === 'fav' && b.ownerFav) return true;
   }
   return false;
 }
