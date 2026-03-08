@@ -522,9 +522,43 @@ function renderStars(rating) {
 
 function coverHTML(book) {
   if (book.cover) {
-    return `<img src="${book.cover}" alt="${book.title}" onerror="this.parentElement.innerHTML='<div class=placeholder-cover>${book.title[0]}</div>'">`;
+    const escaped = book.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const initial = book.title[0] || '?';
+    // Upgrade Google Books zoom=0 to zoom=1 for better quality
+    let src = book.cover.replace('zoom=0', 'zoom=1');
+    return `<img src="${src}" alt="${escaped}" onload="checkCoverPlaceholder(this, '${escaped}', '${book.author.replace(/'/g, "\\'")}')" onerror="tryFallbackCover(this, '${escaped}', '${book.author.replace(/'/g, "\\'")}')">`;
   }
   return `<div class="placeholder-cover">${book.title[0] || '?'}</div>`;
+}
+
+function checkCoverPlaceholder(img, title, author) {
+  // Google Books placeholder is typically 1x1 or very small
+  if (img.naturalWidth <= 1 || img.naturalHeight <= 1 || (img.naturalWidth <= 50 && img.naturalHeight <= 50)) {
+    tryFallbackCover(img, title, author);
+  }
+}
+
+function tryFallbackCover(img, title, author) {
+  if (img.dataset.fallbackTried) {
+    img.parentElement.innerHTML = `<div class="placeholder-cover">${title[0] || '?'}</div>`;
+    return;
+  }
+  img.dataset.fallbackTried = '1';
+  // Try Open Library cover search by title+author
+  const query = encodeURIComponent(`${title} ${author}`);
+  fetch(`https://openlibrary.org/search.json?q=${query}&limit=1&fields=cover_i`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.docs && data.docs[0] && data.docs[0].cover_i) {
+        img.src = `https://covers.openlibrary.org/b/id/${data.docs[0].cover_i}-M.jpg`;
+        img.onerror = () => { img.parentElement.innerHTML = `<div class="placeholder-cover">${title[0] || '?'}</div>`; };
+      } else {
+        img.parentElement.innerHTML = `<div class="placeholder-cover">${title[0] || '?'}</div>`;
+      }
+    })
+    .catch(() => {
+      img.parentElement.innerHTML = `<div class="placeholder-cover">${title[0] || '?'}</div>`;
+    });
 }
 
 function formatDate(d) {
