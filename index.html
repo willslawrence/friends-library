@@ -56,7 +56,8 @@
   .stat-val.orange { color:var(--orange); }
 
   /* Tabs — pill style inspired by reference */
-  .tabs { display:inline-flex; gap:0; padding:4px; max-width:1200px; margin:0 auto 20px; border-bottom:none; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:var(--card); border-radius:16px; box-shadow:var(--shadow-neu); margin-left:20px; }
+  .tabs { display:inline-flex; gap:0; padding:4px; border-bottom:none; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:var(--card); border-radius:16px; box-shadow:var(--shadow-neu); }
+  .tabs-wrap { max-width:1200px; margin:0 auto 20px; padding:0 20px; }
   .tabs::-webkit-scrollbar { display:none; }
   .tab { padding:10px 20px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:none; border-radius:12px; transition:all 0.3s ease; white-space:nowrap; -webkit-tap-highlight-color:transparent; position:relative; }
   .tab:hover { color:var(--text); }
@@ -250,7 +251,8 @@
     .stat-pill .stat-icon { font-size:14px; }
     .stat-pill .stat-val { font-size:16px; }
     .stat-pill .stat-label { font-size:9px; }
-    .tabs { padding:3px; margin-left:12px; margin-bottom:14px; }
+    .tabs { padding:3px; }
+    .tabs-wrap { padding:0 12px; margin-bottom:14px; }
     .tab { padding:8px 14px; font-size:12px; }
     .content { padding:0 12px 32px; }
     .book-grid { grid-template-columns:1fr; gap:10px; }
@@ -311,10 +313,11 @@
   </div>
 </div>
 
-<div class="tabs">
-  <div class="tab active" data-tab="books">📚 Books</div>
-  <div class="tab" data-tab="logs">📋 Check Out Log</div>
-
+<div class="tabs-wrap">
+  <div class="tabs">
+    <div class="tab active" data-tab="books">📚 Books</div>
+    <div class="tab" data-tab="logs">📋 Check Out Log</div>
+  </div>
 </div>
 
 <div class="content">
